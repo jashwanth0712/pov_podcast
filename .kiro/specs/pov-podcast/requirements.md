@@ -2,7 +2,7 @@
 
 ## Introduction
 
-POV Podcast is an AI-powered interactive podcast platform that recreates major historical events through multi-perspective conversations. Rather than presenting facts, the platform immerses users in the emotional experience of history — how it felt, what people believed, and why decisions were made. Each participant in a conversation is a distinct historical persona with a unique AI-generated voice (powered by ElevenLabs), personality, and emotional narrative. Users can listen passively or interrupt at any time to ask questions, share opinions, or steer the discussion. The platform ships with a curated set of pre-built historical scenarios and allows users to generate entirely new ones.
+POV Podcast is an AI-powered interactive podcast platform that recreates major historical events through multi-perspective conversations. Rather than presenting facts, the platform immerses users in the emotional experience of history — how it felt, what people believed, and why decisions were made. Each participant in a conversation is a distinct historical persona with a unique AI-generated voice (powered by ElevenLabs), personality, and emotional narrative. Users can listen passively or interrupt at any time to ask questions, share opinions, or steer the discussion. The platform ships with 12 pre-built historical scenarios spanning the Modern and Contemporary eras, and allows users to generate entirely new ones.
 
 The system is built on a Next.js frontend, a Convex backend (which handles both data storage and authentication via Convex Auth, and acts as the agent orchestrator), OpenRouter (which routes all AI text generation requests to open-source language models), and the ElevenLabs API for text-to-speech streaming and speech-to-text transcription only.
 
@@ -50,11 +50,122 @@ The system is built on a Next.js frontend, a Convex backend (which handles both 
 
 #### Acceptance Criteria
 
-1. THE Platform SHALL display a Scenario library containing at least five pre-built Scenarios on the home page.
-2. WHEN a user opens the Scenario library, THE Platform SHALL present each Scenario with a title, a time period, a brief description (maximum 200 characters), and a list of featured Persona names.
-3. WHEN a user selects a Scenario from the library, THE Platform SHALL navigate the user to the Session setup page for that Scenario within 500ms.
-4. THE Platform SHALL categorise Scenarios by historical era (e.g., Ancient, Medieval, Modern, Contemporary) and allow the user to filter by era.
-5. WHEN a user applies an era filter, THE Platform SHALL update the displayed Scenario list to show only matching Scenarios within 300ms.
+1. THE Platform SHALL display a Scenario library containing exactly 12 pre-built Scenarios on the home page. The 12 pre-built Scenarios are:
+   1. World War II (1939–1945) — Era: Modern
+   2. India–Pakistan Partition (1947) — Era: Modern
+   3. Moon Landing (1969) — Era: Contemporary
+   4. Titanic Sinking (1912) — Era: Modern
+   5. Hiroshima Atomic Bombing (1945) — Era: Modern
+   6. COVID-19 Pandemic (2020–2021) — Era: Contemporary
+   7. Stanford Prison Experiment (1971) — Era: Contemporary
+   8. Jack the Ripper Murders (1888) — Era: Modern
+   9. Bhopal Gas Tragedy (1984) — Era: Contemporary
+   10. Assassination of Osama bin Laden (2011) — Era: Contemporary
+   11. Kargil War (1999) — Era: Contemporary
+   12. Chernobyl Disaster (1986) — Era: Contemporary
+
+2. Each pre-built Scenario SHALL include the following specific Personas as defined in the curated catalogue:
+
+   **1. World War II (1939–1945)**
+   - Front-line Soldier (Allied)
+   - Front-line Soldier (Axis)
+   - Military Commander
+   - Field Nurse / Woman on the Home Front
+   - Jewish Civilian in Occupied Europe
+   - War Correspondent / Journalist
+
+   **2. India–Pakistan Partition (1947)**
+   - Hindu Refugee fleeing to India
+   - Muslim Refugee fleeing to Pakistan
+   - British Colonial Administrator
+   - Sikh Community Leader
+   - Woman who lost her family in the violence
+   - Local Politician / Independence Movement Leader
+
+   **3. Moon Landing (1969)**
+   - Apollo 11 Astronaut (Neil Armstrong / Buzz Aldrin perspective)
+   - Mission Control Flight Director
+   - NASA Engineer who built the spacecraft
+   - Soviet Space Program Scientist
+   - American Citizen watching on TV
+   - Journalist covering the event
+
+   **4. Titanic Sinking (1912)**
+   - Ship's Captain (Edward Smith)
+   - Chief Engineer who built / maintained the ship
+   - First-Class Passenger
+   - Third-Class Passenger (immigrant)
+   - Female Passenger / Survivor
+   - Crew Member (deck hand or steward)
+
+   **5. Hiroshima Atomic Bombing (1945)**
+   - Hiroshima Survivor (Hibakusha)
+   - Relative of someone killed in the blast
+   - American Pilot (Enola Gay crew)
+   - American Military Commander who ordered the bombing
+   - Japanese Doctor / Rescue Worker
+   - International Observer / Journalist
+
+   **6. COVID-19 Pandemic (2020–2021)**
+   - ICU Doctor / Nurse on the front line
+   - Government Health Official / Politician
+   - Middle-Class Professional working from home
+   - Small Business Owner facing closure
+   - Daily Wage Worker who lost their income
+   - Vaccine Scientist / Researcher
+
+   **7. Stanford Prison Experiment (1971)**
+   - Prisoner participant
+   - Guard participant
+   - Lead Researcher (Philip Zimbardo)
+   - Outside Observer / Ethics Reviewer
+   - Participant who broke down / suffered psychological harm
+   - Journalist who later investigated the experiment
+
+   **8. Jack the Ripper Murders (1888)**
+   - Metropolitan Police Detective
+   - Victim's Family Member
+   - East End Resident / Local Witness
+   - Journalist covering the case for a newspaper
+   - Suspect (unnamed, representing the theories)
+   - Coroner / Medical Examiner
+
+   **9. Bhopal Gas Tragedy (1984)**
+   - Union Carbide Factory Worker
+   - Bhopal Resident / Survivor
+   - Rescue Worker / First Responder
+   - Investigative Journalist
+   - Doctor treating victims
+   - Union Carbide Executive / Corporate Representative
+
+   **10. Assassination of Osama bin Laden (2011)**
+   - US Navy SEAL involved in the operation
+   - CIA Intelligence Analyst who tracked bin Laden
+   - Pakistani Resident near the Abbottabad compound
+   - American Politician / Government Official
+   - Journalist breaking the news
+   - Al-Qaeda Associate / Ideological Follower
+
+   **11. Kargil War (1999)**
+   - Indian Army Soldier on the front line
+   - Pakistani Army Soldier / Military Commander
+   - Indian Politician / Defence Minister
+   - Pakistani Politician / Government Official
+   - War Journalist embedded with troops
+   - Family Member of a soldier killed in action
+
+   **12. Chernobyl Disaster (1986)**
+   - Nuclear Plant Operator / Worker on duty during the explosion
+   - Soviet Government Official managing the cover-up
+   - Nuclear Scientist assessing the damage
+   - Liquidator (cleanup worker sent into the exclusion zone)
+   - Local Resident / Evacuee from Pripyat
+   - International Nuclear Safety Observer
+
+3. WHEN a user opens the Scenario library, THE Platform SHALL present each Scenario with a title, a time period, a brief description (maximum 200 characters), and a list of featured Persona names.
+4. WHEN a user selects a Scenario from the library, THE Platform SHALL navigate the user to the Session setup page for that Scenario within 500ms.
+5. THE Platform SHALL categorise Scenarios by historical era (e.g., Ancient, Medieval, Modern, Contemporary) and allow the user to filter by era.
+6. WHEN a user applies an era filter, THE Platform SHALL update the displayed Scenario list to show only matching Scenarios within 300ms.
 
 ---
 
