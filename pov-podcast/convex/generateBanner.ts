@@ -5,106 +5,90 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 
-const RUNPOD_ENDPOINT = "https://api.runpod.ai/v2/wan-2-6-t2i";
+const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+const IMAGE_MODEL = "black-forest-labs/flux.2-pro";
 
-interface RunPodSubmitResponse {
-  id: string;
-  status: string;
-}
-
-interface RunPodStatusResponse {
-  id: string;
-  status: "IN_QUEUE" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
-  output?: {
-    image_url?: string;
-    images?: string[];
+interface OpenRouterImageResponse {
+  choices: Array<{
+    message: {
+      images?: Array<{
+        type: string;
+        image_url: {
+          url: string;
+        };
+      }>;
+    };
+  }>;
+  usage?: {
+    cost?: number;
   };
-  error?: string;
 }
 
-async function submitImageJob(
+async function generateImageWithOpenRouter(
   prompt: string,
-  apiKey: string,
-  size: string = "1024*1024"
+  apiKey: string
 ): Promise<string> {
-  const response = await fetch(`${RUNPOD_ENDPOINT}/run`, {
+  const response = await fetch(OPENROUTER_API_URL, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://pov-podcast.app",
+      "X-Title": "POV Podcast",
     },
     body: JSON.stringify({
-      input: {
-        prompt,
-        size,
-        seed: -1,
-        enable_safety_checker: true,
-      },
+      model: IMAGE_MODEL,
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
     }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`RunPod job submission failed: ${response.status} - ${errorText}`);
+    throw new Error(`OpenRouter image generation failed: ${response.status} - ${errorText}`);
   }
 
-  const data = (await response.json()) as RunPodSubmitResponse;
-  if (!data.id) {
-    throw new Error("RunPod did not return a job ID");
+  const data = (await response.json()) as OpenRouterImageResponse;
+  const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+  if (!imageUrl) {
+    throw new Error("OpenRouter did not return an image URL");
   }
 
-  return data.id;
+  return imageUrl;
 }
 
-async function pollForCompletion(
-  jobId: string,
-  apiKey: string,
-  maxAttempts: number = 60,
-  intervalMs: number = 5000
-): Promise<string> {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
-
-    const response = await fetch(`${RUNPOD_ENDPOINT}/status/${jobId}`, {
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`RunPod status check failed: ${response.status}`);
-    }
-
-    const data = (await response.json()) as RunPodStatusResponse;
-
-    if (data.status === "COMPLETED") {
-      const imageUrl = data.output?.image_url || data.output?.images?.[0];
-      if (!imageUrl) {
-        throw new Error("RunPod completed but did not return image URL");
-      }
-      return imageUrl;
-    }
-
-    if (data.status === "FAILED" || data.status === "CANCELLED") {
-      throw new Error(`RunPod job ${data.status}: ${data.error ?? "unknown error"}`);
-    }
+async function base64ToBlob(dataUrl: string): Promise<Blob> {
+  const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+  const binaryString = atob(base64Data);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
   }
-
-  throw new Error("RunPod job timed out after polling");
+  return new Blob([bytes], { type: "image/png" });
 }
 
-async function downloadAndUploadToStorage(
+async function uploadToStorage(
   ctx: { storage: { store: (blob: Blob) => Promise<Id<"_storage">> } },
   imageUrl: string
 ): Promise<Id<"_storage">> {
-  const response = await fetch(imageUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to download image: ${response.status}`);
+  let blob: Blob;
+
+  if (imageUrl.startsWith("data:")) {
+    blob = await base64ToBlob(imageUrl);
+  } else {
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to download image: ${response.status}`);
+    }
+    blob = await response.blob();
   }
 
-  const blob = await response.blob();
   const storageId = await ctx.storage.store(blob);
-
   return storageId;
 }
 
@@ -124,14 +108,14 @@ export const generateBanner = action({
     scenarioId: v.id("scenarios"),
   },
   handler: async (ctx, args): Promise<{ success: boolean; error?: string }> => {
-    const runpodApiKey = process.env.RUNPOD_API_KEY;
+    const openrouterApiKey = process.env.OPENROUTER_API_KEY;
 
-    if (!runpodApiKey) {
+    if (!openrouterApiKey) {
       await ctx.runMutation(internal.bannerMutations.updateScenarioBannerStatus, {
         scenarioId: args.scenarioId,
         bannerGenerationStatus: "failed",
       });
-      return { success: false, error: "RunPod API key not configured." };
+      return { success: false, error: "OpenRouter API key not configured." };
     }
 
     const scenario = await ctx.runQuery(api.scenarios.getScenarioById, {
@@ -150,16 +134,15 @@ export const generateBanner = action({
         description: scenario.description,
       });
 
-      const jobId = await submitImageJob(bannerPrompt, runpodApiKey);
-      const imageUrl = await pollForCompletion(jobId, runpodApiKey);
+      const imageUrl = await generateImageWithOpenRouter(bannerPrompt, openrouterApiKey);
 
-      // Download and upload to Convex storage
-      const storageId = await downloadAndUploadToStorage(ctx, imageUrl);
+      // Upload to Convex storage (handles both base64 and URL)
+      const storageId = await uploadToStorage(ctx, imageUrl);
       const bannerImageUrl = await ctx.storage.getUrl(storageId);
 
       await ctx.runMutation(internal.bannerMutations.updateScenarioBannerStatus, {
         scenarioId: args.scenarioId,
-        bannerImageUrl: bannerImageUrl ?? imageUrl,
+        bannerImageUrl: bannerImageUrl ?? undefined,
         bannerImageStorageId: storageId,
         bannerGenerationStatus: "complete",
       });

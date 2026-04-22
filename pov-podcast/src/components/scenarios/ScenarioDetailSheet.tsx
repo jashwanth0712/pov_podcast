@@ -79,6 +79,19 @@ export function ScenarioDetailSheet({ scenarioId, onClose }: ScenarioDetailSheet
         </div>
       ) : scenario ? (
         <div className="space-y-6">
+          {/* Banner Image */}
+          {scenario.bannerImageUrl && (
+            <div className="relative -mx-6 -mt-6 h-48 overflow-hidden rounded-t-xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={scenario.bannerImageUrl}
+                alt={scenario.title}
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+            </div>
+          )}
+
           {/* Era & Time Period */}
           <div className="flex items-center gap-3">
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${ERA_COLOURS[scenario.era] ?? "bg-zinc-100 text-zinc-700"}`}>

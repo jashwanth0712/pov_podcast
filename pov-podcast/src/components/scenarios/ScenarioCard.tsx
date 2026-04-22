@@ -23,6 +23,7 @@ interface ScenarioCardProps {
   description: string;
   personas?: PersonaSummary[];
   contentDisclaimer?: string;
+  bannerImageUrl?: string | null;
   /** If provided, called on click instead of navigating directly */
   onSelect?: (id: Id<"scenarios">) => void;
 }
@@ -82,6 +83,7 @@ export function ScenarioCard({
   description,
   personas = [],
   contentDisclaimer,
+  bannerImageUrl,
   onSelect,
 }: ScenarioCardProps) {
   const router = useRouter();
@@ -134,33 +136,47 @@ export function ScenarioCard({
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className="
-        group relative flex flex-col gap-3 rounded-2xl border border-zinc-200
-        bg-white p-5 shadow-sm transition-all duration-150
+        group relative flex flex-col rounded-2xl border border-zinc-200
+        bg-white overflow-hidden shadow-sm transition-all duration-150
         hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
         dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600
         cursor-pointer select-none
       "
     >
-      {/* Era badge */}
-      <div className="flex items-start justify-between gap-2">
-        <span
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${eraBadgeClass}`}
-          aria-label={`Era: ${era}`}
-        >
-          {era}
-        </span>
+      {/* Banner image section */}
+      <div className="relative h-32 w-full bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800">
+        {bannerImageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={bannerImageUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        {/* Era badge positioned on the banner */}
+        <div className="absolute top-3 left-3">
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold backdrop-blur-sm ${eraBadgeClass}`}
+            aria-label={`Era: ${era}`}
+          >
+            {era}
+          </span>
+        </div>
+        {/* Title overlay on banner */}
+        <div className="absolute bottom-3 left-4 right-4">
+          <h3 className="text-base font-bold leading-snug text-white drop-shadow-md group-hover:text-blue-200 transition-colors">
+            {title}
+          </h3>
+          <p className="text-xs font-medium text-white/80 mt-0.5">
+            {timePeriod}
+          </p>
+        </div>
       </div>
 
-      {/* Title */}
-      <h3 className="text-base font-bold leading-snug text-zinc-900 dark:text-zinc-50 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-        {title}
-      </h3>
-
-      {/* Time period */}
-      <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 -mt-2">
-        {timePeriod}
-      </p>
+      {/* Content section */}
+      <div className="flex flex-col gap-3 p-4">
 
       {/* Description */}
       <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300 flex-1">
@@ -170,7 +186,7 @@ export function ScenarioCard({
       {/* Persona avatar row */}
       {visiblePersonas.length > 0 && (
         <div
-          className="flex items-center gap-1.5 mt-1"
+          className="flex items-center gap-1.5"
           aria-label={`${visiblePersonas.length} persona${visiblePersonas.length !== 1 ? "s" : ""}: ${visiblePersonas.map((p) => p.name).join(", ")}`}
         >
           {visiblePersonas.map((persona, i) => (
@@ -205,9 +221,10 @@ export function ScenarioCard({
       )}
 
       {/* Content disclaimer (Req 8.2) */}
-      <p className="mt-1 text-[10px] leading-tight text-zinc-400 dark:text-zinc-500 border-t border-zinc-100 dark:border-zinc-800 pt-2">
+      <p className="text-[10px] leading-tight text-zinc-400 dark:text-zinc-500 border-t border-zinc-100 dark:border-zinc-800 pt-2">
         {disclaimer}
       </p>
+      </div>
     </article>
   );
 }

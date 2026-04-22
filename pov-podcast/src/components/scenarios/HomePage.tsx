@@ -366,6 +366,7 @@ interface ScenarioDoc {
   personaIds: Id<"personas">[];
   contentDisclaimer: string;
   isPrebuilt: boolean;
+  bannerImageUrl?: string | null;
 }
 
 /**
@@ -394,6 +395,7 @@ function ScenarioCardWithPersonas({
       description={scenario.description}
       personas={personas ?? []}
       contentDisclaimer={contentDisclaimer}
+      bannerImageUrl={scenario.bannerImageUrl}
       onSelect={onSelect}
     />
   );
@@ -410,20 +412,22 @@ function ScenarioGridSkeleton({ count }: { count: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="animate-pulse rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 space-y-3"
+          className="animate-pulse rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden"
           aria-hidden="true"
         >
-          <div className="h-5 w-20 rounded-full bg-zinc-200 dark:bg-zinc-700" />
-          <div className="h-4 w-3/4 rounded bg-zinc-200 dark:bg-zinc-700" />
-          <div className="h-3 w-1/3 rounded bg-zinc-100 dark:bg-zinc-800" />
-          <div className="space-y-1.5">
-            <div className="h-3 w-full rounded bg-zinc-100 dark:bg-zinc-800" />
-            <div className="h-3 w-5/6 rounded bg-zinc-100 dark:bg-zinc-800" />
-          </div>
-          <div className="flex gap-1.5 pt-1">
-            {[...Array(4)].map((_, j) => (
-              <div key={j} className="h-7 w-7 rounded-full bg-zinc-200 dark:bg-zinc-700" />
-            ))}
+          {/* Banner skeleton */}
+          <div className="h-32 w-full bg-zinc-200 dark:bg-zinc-700" />
+          {/* Content skeleton */}
+          <div className="p-4 space-y-3">
+            <div className="space-y-1.5">
+              <div className="h-3 w-full rounded bg-zinc-100 dark:bg-zinc-800" />
+              <div className="h-3 w-5/6 rounded bg-zinc-100 dark:bg-zinc-800" />
+            </div>
+            <div className="flex gap-1.5 pt-1">
+              {[...Array(4)].map((_, j) => (
+                <div key={j} className="h-7 w-7 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+              ))}
+            </div>
           </div>
         </div>
       ))}

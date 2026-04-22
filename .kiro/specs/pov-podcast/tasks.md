@@ -10,7 +10,7 @@ Implement the POV Podcast platform incrementally, starting with the data layer a
   - Initialise the Next.js project with TypeScript and configure the Convex backend
   - Define all Convex table schemas: `scenarios`, `personas`, `personaRelationships`, `sessions`, `branches`, `dialogueTurns`, `personaAgentStates`, `deadlockEvents`, `rejectedInterruptions`, `userPreferences`
   - Define all shared TypeScript interfaces: `ArticleReference`, `EmotionalState`, `ContextMessage`, `CompactionSummary`, `VoiceParams`
-  - Configure environment variables for `OPENROUTER_MODEL`, `RUNPOD_ENDPOINT_URL`, `GEMINI_MODEL_ID`, and ElevenLabs API keys
+  - Configure environment variables for `OPENROUTER_MODEL`, `RUNPOD_ENDPOINT_URL`, `GEMINI_MODEL_ID`, and `ELEVENLABS_API_KEY` (configured via `npx convex env set`)
   - _Requirements: 3.3, 12.1, 21.2_
 
 - [x] 2. Authentication
