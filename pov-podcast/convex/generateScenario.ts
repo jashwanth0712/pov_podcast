@@ -8,6 +8,10 @@ import { matchVoice } from "./voiceMatching";
 /**
  * Validates a scenario topic string.
  * Requirements: 2.2, 2.5
+ *
+ * Inline implementation kept here so the Convex action (Node.js runtime)
+ * does not need to import from the Next.js src tree. The canonical shared
+ * version lives in src/lib/topicValidation.ts for frontend use.
  */
 function validateTopic(topic: string): { valid: boolean; error?: string } {
   if (topic.length < 3) {

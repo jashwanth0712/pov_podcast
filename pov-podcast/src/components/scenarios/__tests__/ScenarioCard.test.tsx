@@ -8,6 +8,11 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+// Mock convex/react — ScenarioCard uses useConvexAuth for auth-aware navigation
+vi.mock("convex/react", () => ({
+  useConvexAuth: () => ({ isAuthenticated: true, isLoading: false }),
+}));
+
 // Mock convex/_generated/dataModel — not needed for ScenarioCard unit tests
 // since we're passing plain string IDs in tests
 

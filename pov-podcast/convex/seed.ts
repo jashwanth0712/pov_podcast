@@ -26,7 +26,7 @@ interface PersonaSeed {
 interface ScenarioSeed {
   title: string;
   timePeriod: string;
-  era: "Modern" | "Contemporary";
+  era: "Ancient" | "Medieval" | "Modern" | "Contemporary";
   description: string;
   initialDialogueOutline: string;
   personas: PersonaSeed[];
@@ -1416,6 +1416,352 @@ const SCENARIOS: ScenarioSeed[] = [
       },
     ],
   },
+
+  // ═══════════════════════ ANCIENT (1) ═══════════════════════
+
+  // 13 — Assassination of Julius Caesar
+  {
+    title: "The Assassination of Julius Caesar",
+    timePeriod: "44 BC",
+    era: "Ancient",
+    description: "On the Ides of March, Rome's most powerful man is murdered by his closest allies, plunging the Republic into chaos.",
+    initialDialogueOutline:
+      "March 15, 44 BC. Caesar lies dead on the Senate floor with twenty-three stab wounds. Each persona confronts what this act means — liberation, betrayal, or the end of everything they knew.",
+    personas: [
+      {
+        name: "Marcus Brutus",
+        historicalRole: "Senator and leader of the assassination conspiracy",
+        personalityTraits: ["philosophical", "tormented", "honourable to a fault"],
+        emotionalBackstory:
+          "Marcus is descended from Lucius Junius Brutus, who expelled the last king of Rome and founded the Republic. That lineage is both his identity and his prison. Caesar was his mentor, perhaps his father — the rumours of Caesar's affair with his mother Servilia have followed him his entire life. He loves Caesar the man, but he fears Caesar the dictator. When Cassius showed him the anonymous letters begging 'Brutus, thou sleep'st,' he could no longer ignore what he believed was his ancestral duty. He struck the blow not out of ambition but out of principle — or so he tells himself. Now, standing over the body of the man who embraced him at the last, he wonders if principle and murder can truly coexist. 'Et tu, Brute?' will echo in his mind until he falls on his own sword at Philippi.",
+        speakingStyle: "Measured, Stoic philosophical cadence, speaks in moral abstractions that crack under emotional pressure",
+        ideologicalPosition: "Republican idealist who believes tyrannicide is the highest civic duty",
+        geographicOrigin: "Italy",
+        estimatedAge: 41,
+        gender: "male",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Marcus_Junius_Brutus", "Marcus Junius Brutus", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Assassination_of_Julius_Caesar", "Assassination of Julius Caesar", "neutral"),
+          ref("https://en.wikipedia.org/wiki/Liberatores", "The Liberatores Conspiracy", "neutral"),
+        ],
+      },
+      {
+        name: "Mark Antony",
+        historicalRole: "Caesar's loyal general and consul",
+        personalityTraits: ["passionate", "cunning", "vengeful"],
+        emotionalBackstory:
+          "Mark Antony was Caesar's right hand — his general, his drinking companion, his political enforcer. On the morning of the Ides, someone warned him the conspirators might target him too. He was lured away from the Senate by Trebonius while his friend was butchered inside. Now he stands before the bloodied toga, burning with grief and calculating his revenge. He will deliver a funeral oration that turns the Roman mob against the assassins — 'Friends, Romans, countrymen' — not because he is a great orator by nature, but because rage gives him eloquence. He loved Caesar, and he intends to make every conspirator pay. But his vengeance will also serve his ambition. The two are inseparable, and he does not care to separate them.",
+        speakingStyle: "Bold, emotional, rhetorically devastating, shifts from soldierly bluntness to manipulative eloquence",
+        ideologicalPosition: "Caesarian loyalist who sees the assassination as personal betrayal and political opportunity",
+        geographicOrigin: "Italy",
+        estimatedAge: 39,
+        gender: "male",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Mark_Antony", "Mark Antony", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Mark_Antony%27s_funeral_oration", "Antony's Funeral Oration", "neutral"),
+          ref("https://en.wikipedia.org/wiki/Roman_Republic#Fall", "Fall of the Roman Republic", "contextual"),
+        ],
+      },
+      {
+        name: "Calpurnia",
+        historicalRole: "Caesar's wife who dreamed of his death",
+        personalityTraits: ["intuitive", "grief-stricken", "politically erased"],
+        emotionalBackstory:
+          "Calpurnia dreamed of Caesar's statue spouting blood like a fountain while smiling Romans bathed their hands in it. She begged him not to go to the Senate. He almost listened — he was ready to stay home — until Decimus Brutus arrived and mocked him for heeding a woman's dreams. Caesar went. Now Calpurnia sits in their home, waiting for news she already knows. She is one of the most powerful women in Rome and completely powerless where it mattered most. History will remember her as a footnote — the wife with the prophetic dream — rather than as the woman who understood Roman politics well enough to see the conspiracy that Caesar's ego blinded him to. She warned him. He chose his pride. She is left with his blood-soaked toga and a Republic that will bury her in silence.",
+        speakingStyle: "Dignified, restrained Roman matron's voice, grief expressed through precision rather than hysteria",
+        ideologicalPosition: "Sees politics as a machine that consumes the people she loves, distrusts republican idealism as a mask for ambition",
+        geographicOrigin: "Italy",
+        estimatedAge: 31,
+        gender: "female",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Calpurnia_(wife_of_Caesar)", "Calpurnia", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Women_in_ancient_Rome#Elite_women", "Women in Ancient Rome", "contextual"),
+          ref("https://en.wikipedia.org/wiki/Julius_Caesar_(play)", "Shakespeare's Julius Caesar — Cultural Legacy", "cultural"),
+        ],
+      },
+      {
+        name: "Gaius Cassius Longinus",
+        historicalRole: "Senator, military commander, and architect of the conspiracy",
+        personalityTraits: ["ambitious", "jealous", "strategically brilliant"],
+        emotionalBackstory:
+          "Cassius is a decorated general who saved a Roman army at Carrhae and fought with distinction across the East. He expected to be rewarded with the highest offices of state. Instead, Caesar favoured others — younger men, less experienced, more obsequious. Cassius's republicanism is real, but it is inseparable from his wounded pride. He recruited Brutus because Brutus has the moral authority that Cassius lacks; Cassius has the plan, but Brutus has the name. He is the sharp steel behind the philosophical façade. He knows that killing Caesar is the easy part — holding Rome after is the challenge. He also suspects, correctly, that Antony will be more dangerous than Caesar ever was. But the die is cast, and Cassius is a man who does not look back.",
+        speakingStyle: "Sharp, rapid Latin-inflected English, cuts to strategic reality, impatient with sentimentality",
+        ideologicalPosition: "Republican motivated equally by ideology and personal grievance against Caesar's autocracy",
+        geographicOrigin: "Italy",
+        estimatedAge: 42,
+        gender: "male",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Gaius_Cassius_Longinus", "Gaius Cassius Longinus", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Battle_of_Carrhae", "Battle of Carrhae", "military"),
+          ref("https://en.wikipedia.org/wiki/Roman_Republic#Crisis", "Crisis of the Roman Republic", "contextual"),
+        ],
+      },
+      {
+        name: "Cleopatra VII",
+        historicalRole: "Queen of Egypt and Caesar's lover, mother of Caesarion",
+        personalityTraits: ["brilliant", "calculating", "devastated"],
+        emotionalBackstory:
+          "Cleopatra is in Rome when Caesar is killed, living in a villa across the Tiber with their son Caesarion. She came to Rome as Caesar's political and romantic partner, negotiating Egypt's future through pillow talk and diplomatic genius. She speaks nine languages, commands the wealthiest kingdom in the Mediterranean, and has just seen her entire strategy collapse with twenty-three knife wounds. Without Caesar, she has no protector in Rome. Caesarion — Caesar's only biological son — is now a threat to Octavian's inheritance rather than an asset. She must flee Rome before the conspirators or the mob turn on her. She will return to Egypt and eventually ally with Antony, but tonight she packs her belongings with the cold efficiency of a queen who has lost battles before and survived. Her grief is real. Her survival instinct is stronger.",
+        speakingStyle: "Regal, multilingual, shifts between intimate vulnerability and royal authority",
+        ideologicalPosition: "Egyptian sovereign who sees Rome's internal struggles as threats to be navigated, not causes to champion",
+        geographicOrigin: "Egypt",
+        estimatedAge: 25,
+        gender: "female",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Cleopatra", "Cleopatra VII", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Caesarion", "Caesarion — Son of Caesar", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Ptolemaic_Kingdom", "Ptolemaic Egypt", "contextual"),
+        ],
+      },
+      {
+        name: "Gaius Octavian",
+        historicalRole: "Caesar's adopted heir and future Emperor Augustus",
+        personalityTraits: ["patient", "cold", "preternaturally strategic"],
+        emotionalBackstory:
+          "Octavian is eighteen years old and studying in Apollonia when he learns that his great-uncle Julius Caesar has been murdered — and that Caesar's will names him as adopted son and heir. He is young, sickly, and politically unknown. Every advisor tells him to renounce the inheritance — it is too dangerous, the conspirators are too powerful, Antony will crush him. He ignores all of them. He returns to Rome with nothing but Caesar's name and a patience that will outlast every rival. He will avenge Caesar not with Antony's theatrical grief but with decades of meticulous political warfare. He will destroy Brutus, Cassius, and eventually Antony and Cleopatra — and he will transform the Republic into an Empire with himself at its centre. Tonight he is a boy learning of his destiny. He accepts it with terrifying calm.",
+        speakingStyle: "Quiet, controlled, far older than his years, speaks in the third person when discussing strategy",
+        ideologicalPosition: "Pragmatist who inherits Caesar's legacy and will use both republican forms and autocratic power to reshape Rome",
+        geographicOrigin: "Italy",
+        estimatedAge: 18,
+        gender: "male",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Augustus", "Augustus (Octavian)", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Caesar%27s_will", "Caesar's Will and Adoption of Octavian", "neutral"),
+          ref("https://en.wikipedia.org/wiki/Roman_Empire#Establishment", "Establishment of the Roman Empire", "contextual"),
+        ],
+      },
+    ],
+  },
+
+  // ═══════════════════════ ADDITIONAL MODERN (2) ═══════════════════════
+
+  // 14 — The French Revolution
+  {
+    title: "The French Revolution: Liberty, Equality, Terror",
+    timePeriod: "1789–1794",
+    era: "Modern",
+    description: "A starving nation overthrows its monarchy, then devours its own children as revolution collapses into the Reign of Terror.",
+    initialDialogueOutline:
+      "Summer 1793. The King is dead, the Republic declared, and the Committee of Public Safety is consolidating power. Each persona navigates the razor's edge between revolutionary idealism and the guillotine.",
+    personas: [
+      {
+        name: "Maximilien Robespierre",
+        historicalRole: "Leader of the Committee of Public Safety",
+        personalityTraits: ["incorruptible", "fanatical", "tragically sincere"],
+        emotionalBackstory:
+          "Maximilien was a provincial lawyer from Arras who believed, with every fibre of his being, in Rousseau's vision of the general will. He opposed the death penalty before the Revolution. Now he signs execution orders daily, convinced that Terror is the price of virtue — that the Republic cannot survive unless its enemies are destroyed. He sleeps little, eats less, and trusts no one. He sees traitors everywhere because traitors are everywhere. He does not enjoy power; he endures it as a duty. His tragedy is not hypocrisy but sincerity — he genuinely believes that mass execution will produce a republic of equals. He will go to the guillotine himself in Thermidor, destroyed by the machine he perfected, still believing he was right.",
+        speakingStyle: "Precise, legalistic French-accented English, builds arguments with cold logical rigour, voice rising only when defending virtue",
+        ideologicalPosition: "Radical republican who believes revolutionary terror is inseparable from revolutionary virtue",
+        geographicOrigin: "France",
+        estimatedAge: 35,
+        gender: "male",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Maximilien_Robespierre", "Maximilien Robespierre", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Reign_of_Terror", "Reign of Terror", "neutral"),
+          ref("https://en.wikipedia.org/wiki/Committee_of_Public_Safety", "Committee of Public Safety", "institutional"),
+        ],
+      },
+      {
+        name: "Marie Antoinette",
+        historicalRole: "Deposed Queen of France, prisoner awaiting execution",
+        personalityTraits: ["dignified", "transformed", "defiant in defeat"],
+        emotionalBackstory:
+          "Marie was married off to Louis XVI at fourteen — an Austrian princess shipped to Versailles as a diplomatic pawn. She was frivolous in her youth because frivolity was all Versailles offered a queen with no political power. When they called her Madame Déficit, she did not understand — she had never seen the bread lines. But prison has stripped away everything. Her husband is dead, executed in January. Her children have been taken from her. Her son is being taught to denounce her as a criminal and a monster. She has nothing left but her composure. When she accidentally steps on the executioner's foot ascending the scaffold, she will say 'Pardon me, sir, I did not mean to do it.' In her last months she is more queen than she ever was at Versailles — because now her dignity is chosen, not inherited.",
+        speakingStyle: "Formal, aristocratic French-accented English, maintains composure as armour, occasional flashes of bitter wit",
+        ideologicalPosition: "Monarchist by birth who has transcended politics into personal dignity in the face of annihilation",
+        geographicOrigin: "Austria",
+        estimatedAge: 37,
+        gender: "female",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Marie_Antoinette", "Marie Antoinette", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Execution_of_Marie_Antoinette", "Execution of Marie Antoinette", "neutral"),
+          ref("https://en.wikipedia.org/wiki/Women_in_the_French_Revolution", "Women in the French Revolution", "contextual"),
+        ],
+      },
+      {
+        name: "Olympe de Gouges",
+        historicalRole: "Playwright and author of the Declaration of the Rights of Woman",
+        personalityTraits: ["visionary", "fearless", "ahead of her time"],
+        emotionalBackstory:
+          "Olympe wrote the Declaration of the Rights of Woman and of the Female Citizen in 1791, mirroring the Declaration of the Rights of Man article by article and asking the obvious question: if all men are born free and equal, what about women? She opposed the execution of the King — not out of royalism but because she believed a republic built on vengeance would consume itself. For this she was denounced as a counter-revolutionary. She will be guillotined in November 1793, three weeks after Marie Antoinette, for the crime of believing that liberty should mean liberty for everyone. She represents the road not taken — the revolution that could have been, if it had extended its principles to half the population instead of silencing them.",
+        speakingStyle: "Passionate, rhetorical French-accented English, uses the Revolution's own language as a weapon against its hypocrisy",
+        ideologicalPosition: "Feminist revolutionary who demands the Revolution honour its own principles by including women",
+        geographicOrigin: "France",
+        estimatedAge: 45,
+        gender: "female",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Olympe_de_Gouges", "Olympe de Gouges", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Declaration_of_the_Rights_of_Woman_and_of_the_Female_Citizen", "Declaration of Rights of Woman", "primary source"),
+          ref("https://en.wikipedia.org/wiki/Feminism_in_France", "Feminism in France", "contextual"),
+        ],
+      },
+      {
+        name: "Toussaint Louverture",
+        historicalRole: "Leader of the Haitian Revolution, inspired by French revolutionary ideals",
+        personalityTraits: ["strategic", "principled", "bitterly aware of hypocrisy"],
+        emotionalBackstory:
+          "Toussaint was born a slave in Saint-Domingue. When news of the French Revolution reached the Caribbean — that men were declaring themselves free and equal — he and half a million enslaved people asked the obvious question: does this include us? The answer from Paris was ambiguous, then contradictory, then hostile. Toussaint led the largest and most successful slave revolt in history, defeating French, Spanish, and British armies. He writes to the National Convention in the language of the Revolution, quoting their own declarations back at them. He represents the ultimate test of revolutionary sincerity: liberty, equality, fraternity — but only for white Frenchmen? He will be captured by Napoleon's forces and die in a cold French prison, but his revolution will succeed without him. Haiti will become the first nation founded by former slaves.",
+        speakingStyle: "Commanding, diplomatic Creole-French-accented English, uses the language of the Enlightenment with devastating precision",
+        ideologicalPosition: "Abolitionist revolutionary who holds France accountable to its own declared principles",
+        geographicOrigin: "Haiti",
+        estimatedAge: 50,
+        gender: "male",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Toussaint_Louverture", "Toussaint Louverture", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Haitian_Revolution", "Haitian Revolution", "sympathetic"),
+          ref("https://en.wikipedia.org/wiki/Abolition_of_slavery_in_France", "French Abolition of Slavery", "critical"),
+        ],
+      },
+      {
+        name: "Georges Danton",
+        historicalRole: "Revolutionary leader and founder of the Committee of Public Safety",
+        personalityTraits: ["larger-than-life", "pragmatic", "morally exhausted"],
+        emotionalBackstory:
+          "Georges is the voice that roared the Revolution into being — his speeches at the Cordeliers Club moved crowds to storm barricades. He helped create the Revolutionary Tribunal and the Committee of Public Safety. But by 1793 he is tired. The Terror he helped unleash is consuming people he knows and respects. He calls for clemency, for an end to the executions, and in doing so signs his own death warrant. Robespierre, his former ally, will have him arrested for 'indulgence.' On the scaffold, Danton's last words to the executioner will be: 'Show my head to the people. It is worth seeing.' He represents the revolutionary who creates a monster and then is devoured by it — the man who wanted liberty and got the guillotine.",
+        speakingStyle: "Booming, theatrical French-accented English, alternating between rousing rhetoric and weary cynicism",
+        ideologicalPosition: "Moderate revolutionary who turns against the Terror and is destroyed for advocating mercy",
+        geographicOrigin: "France",
+        estimatedAge: 34,
+        gender: "male",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Georges_Danton", "Georges Danton", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Cordeliers", "Cordeliers Club", "institutional"),
+          ref("https://en.wikipedia.org/wiki/Indulgents", "The Indulgents — Danton's Faction", "neutral"),
+        ],
+      },
+      {
+        name: "Jeanne",
+        historicalRole: "Parisian market woman and sans-culotte",
+        personalityTraits: ["fierce", "practical", "revolutionary from hunger"],
+        emotionalBackstory:
+          "Jeanne sells fish at Les Halles market and has watched her children go hungry while the court at Versailles feasted. She was among the women who marched on Versailles in October 1789, dragging the royal family back to Paris. She did not march for abstract rights — she marched for bread. The Revolution promised her that the people would rule and the people would eat. Now the Revolution is three years old and bread is still expensive, but there are new laws and new rulers and new enemies every week. She supports the Terror because the aristocrats and hoarders deserve what they get. But she is starting to notice that the guillotine is no longer just for nobles — it is for anyone who disagrees, including people who look and sound like her. She is the Revolution's conscience and its muscle, and she is beginning to wonder if the Revolution remembers why it started.",
+        speakingStyle: "Rough, rapid Parisian market French-accented English, interrupts, argues from lived experience not theory",
+        ideologicalPosition: "Working-class radical who measures the Revolution's success by whether her children can eat",
+        geographicOrigin: "France",
+        estimatedAge: 38,
+        gender: "female",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Women%27s_March_on_Versailles", "Women's March on Versailles", "neutral"),
+          ref("https://en.wikipedia.org/wiki/Sans-culottes", "Sans-Culottes", "sympathetic"),
+          ref("https://en.wikipedia.org/wiki/French_Revolution#Causes", "Causes of the French Revolution", "contextual"),
+        ],
+      },
+    ],
+  },
+
+  // 15 — The Spanish Flu
+  {
+    title: "The Spanish Flu: The Forgotten Pandemic",
+    timePeriod: "1918–1919",
+    era: "Modern",
+    description: "As WWI ends, an invisible enemy kills more people than the war itself — and the world chooses to forget.",
+    initialDialogueOutline:
+      "Autumn 1918. The second wave is ravaging cities worldwide. Each persona faces the pandemic from a different continent, a different class, and a different level of power — united only by the virus.",
+    personas: [
+      {
+        name: "Dr. Victor Vaughan",
+        historicalRole: "Acting Surgeon General of the US Army",
+        personalityTraits: ["authoritative", "horrified", "scientifically humble"],
+        emotionalBackstory:
+          "Victor oversees the medical care of two million American soldiers, and the flu is tearing through military camps faster than any battlefield weapon. At Camp Devens outside Boston, soldiers are dying so fast that bodies are stacked like cordwood. He has seen epidemic disease before, but nothing like this — young, healthy men turning blue and drowning in their own lungs within hours. He will later write that if the epidemic had continued at its rate of acceleration, civilisation could have disappeared within a few weeks. He is the most senior military doctor in America and he has no treatment, no vaccine, and no explanation. The war machine demands healthy soldiers, and he cannot deliver them. He is learning in real time that nature outranks every general.",
+        speakingStyle: "Formal, authoritative American medical English, increasingly shaken beneath professional composure",
+        ideologicalPosition: "Military medical establishment confronting the limits of wartime medicine",
+        geographicOrigin: "United States",
+        estimatedAge: 67,
+        gender: "male",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Spanish_flu", "Spanish Flu", "neutral"),
+          ref("https://en.wikipedia.org/wiki/Spanish_flu_in_the_United_States", "Spanish Flu in the US", "neutral"),
+          ref("https://en.wikipedia.org/wiki/Camp_Devens", "Camp Devens — Flu Outbreak", "contextual"),
+        ],
+      },
+      {
+        name: "Lutiant Van Wert",
+        historicalRole: "Native American nurse serving in Washington, D.C.",
+        personalityTraits: ["compassionate", "witness", "doubly marginalised"],
+        emotionalBackstory:
+          "Lutiant is a young woman from the Cheyenne and Arapaho Nations working as a clerk and volunteer nurse in Washington. She writes letters home describing the horror in vivid detail: 'It is simply terrible. People are dying like flies.' She watches colleagues fall sick at their desks and be dead by nightfall. As a Native American woman, she occupies an invisible space — serving a government that has systematically destroyed her people, tending to white soldiers who would not sit beside her on a streetcar. The flu does not discriminate, but the medical system does. Native American communities will be devastated — some villages will lose ninety percent of their population — and the government will do almost nothing. Lutiant's letters are among the most vivid first-person accounts of the pandemic, written by someone the history books almost forgot.",
+        speakingStyle: "Warm, observational American English with occasional Cheyenne phrases, writes and speaks with documentary precision",
+        ideologicalPosition: "Indigenous woman who serves despite systemic injustice, bearing witness from the margins",
+        geographicOrigin: "United States",
+        estimatedAge: 22,
+        gender: "female",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Spanish_flu#North_America", "Spanish Flu in North America", "neutral"),
+          ref("https://en.wikipedia.org/wiki/1918_flu_pandemic_in_the_United_States#Native_American_communities", "Flu Impact on Native Americans", "critical"),
+          ref("https://en.wikipedia.org/wiki/Cheyenne_and_Arapaho_Tribes", "Cheyenne and Arapaho Nations", "contextual"),
+        ],
+      },
+      {
+        name: "Mohandas Gandhi",
+        historicalRole: "Indian independence leader recovering from the flu",
+        personalityTraits: ["reflective", "weakened", "spiritually deepened"],
+        emotionalBackstory:
+          "Mohandas contracted the flu in 1918 and nearly died. He was already weakened from years of fasting and ascetic living. As he recovered, he witnessed the pandemic sweep through India — killing between twelve and seventeen million people, the highest toll of any country. British India's medical infrastructure was built to serve the colonial administration, not the Indian population. The pandemic exposed what Gandhi had been arguing for years: colonial rule was not a partnership but an extraction. Indian bodies were expendable — as soldiers on the Western Front, as labourers in colonial economies, and now as victims of a disease that the British administration was too indifferent or too incompetent to address. His near-death experience deepened his resolve. Within a year he would launch the Non-Cooperation Movement.",
+        speakingStyle: "Gentle, deliberate Indian English, speaks in moral parables, voice still weak from illness",
+        ideologicalPosition: "Anti-colonial activist who sees the pandemic as proof of colonialism's fundamental disregard for Indian life",
+        geographicOrigin: "India",
+        estimatedAge: 49,
+        gender: "male",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Spanish_flu_in_India", "Spanish Flu in India", "neutral"),
+          ref("https://en.wikipedia.org/wiki/Mahatma_Gandhi", "Mahatma Gandhi", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Non-cooperation_movement", "Non-Cooperation Movement", "contextual"),
+        ],
+      },
+      {
+        name: "Laura Spinney",
+        historicalRole: "Composite narrator representing pandemic historians and researchers",
+        personalityTraits: ["analytical", "outraged by forgetting", "connective"],
+        emotionalBackstory:
+          "Laura represents the historians who have spent decades trying to understand why the world's deadliest pandemic — fifty to one hundred million dead — was almost entirely erased from collective memory. The war overshadowed it. The censors suppressed it. The survivors wanted to forget. The result is a civilisational amnesia that left the world unprepared for the next pandemic a century later. She connects the 1918 flu to COVID-19, to Ebola, to every public health failure that could have been mitigated by remembering. She is angry — not at the virus, but at the forgetting. She believes that the dead deserve to be counted, named, and mourned, and that a society that forgets fifty million deaths is a society that has already decided those lives did not matter.",
+        speakingStyle: "Clear, journalistic English, builds connections across time periods, passionate about memory as a public health tool",
+        ideologicalPosition: "Pandemic historian who argues that collective memory is a form of public health infrastructure",
+        geographicOrigin: "United Kingdom",
+        estimatedAge: 45,
+        gender: "female",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Pale_Rider:_The_Spanish_Flu_of_1918_and_How_It_Changed_the_World", "Pale Rider — Laura Spinney", "academic"),
+          ref("https://en.wikipedia.org/wiki/Spanish_flu#Mortality", "Spanish Flu Mortality Estimates", "neutral"),
+          ref("https://en.wikipedia.org/wiki/Spanish_flu#Legacy", "Spanish Flu Legacy", "contextual"),
+        ],
+      },
+      {
+        name: "Wilfred Owen",
+        historicalRole: "War poet who died one week before the Armistice",
+        personalityTraits: ["poetic", "shell-shocked", "defiant"],
+        emotionalBackstory:
+          "Wilfred is a soldier-poet on the Western Front, writing verse that will redefine how the world understands war. Around him, men are dying not from bullets but from a disease that makes them drown in fluid from their own lungs — a suffocation eerily similar to the gas attacks he has written about in 'Dulce et Decorum Est.' The flu is killing more soldiers than the enemy. The absurdity is total: they survived the trenches only to die of a cough. Wilfred will be killed by machine gun fire on November 4, 1918 — seven days before the Armistice. His mother will receive the telegram as church bells ring for peace. He represents the generation that was destroyed twice — by war and by pandemic — and whose poetry is the only monument adequate to their suffering.",
+        speakingStyle: "Lyrical, haunted English, speaks in images drawn from the trenches, alternates between beauty and horror",
+        ideologicalPosition: "Anti-war poet who sees the pandemic as another face of the industrial-scale destruction of young lives",
+        geographicOrigin: "United Kingdom",
+        estimatedAge: 25,
+        gender: "male",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Wilfred_Owen", "Wilfred Owen", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Dulce_et_Decorum_est", "Dulce et Decorum Est", "primary source"),
+          ref("https://en.wikipedia.org/wiki/Spanish_flu#Soldiers_and_the_military", "Spanish Flu and the Military", "contextual"),
+        ],
+      },
+      {
+        name: "Fumiko Hayashi",
+        historicalRole: "Japanese writer who survived the pandemic as a child",
+        personalityTraits: ["observant", "lonely", "preternaturally aware"],
+        emotionalBackstory:
+          "Fumiko is a young girl in Onomichi, Japan, watching the pandemic unfold through a child's eyes. Schools are closed. Her neighbours wear masks. The festivals are cancelled. Adults whisper in corners and come back with red eyes. She does not fully understand what is happening, but she understands the silence — the streets that should be full of people, the houses where the curtains stay drawn. Japan will lose between 257,000 and 481,000 people to the flu. Fumiko will grow up to become one of Japan's greatest writers, and the loneliness of this period — the sense of a world emptied of familiar sounds — will infuse her work. She represents the children of pandemics: the ones who survive but carry the silence forward into lives shaped by what they could not understand.",
+        speakingStyle: "Quiet, observational Japanese-accented English, describes the world in sensory details, sees what adults miss",
+        ideologicalPosition: "Child witness whose understanding is emotional and sensory rather than political",
+        geographicOrigin: "Japan",
+        estimatedAge: 14,
+        gender: "female",
+        articleReferences: [
+          ref("https://en.wikipedia.org/wiki/Fumiko_Hayashi", "Fumiko Hayashi", "biographical"),
+          ref("https://en.wikipedia.org/wiki/Spanish_flu#Japan", "Spanish Flu in Japan", "neutral"),
+          ref("https://en.wikipedia.org/wiki/Taisho_period", "Taisho Period Japan", "contextual"),
+        ],
+      },
+    ],
+  },
 ];
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -1423,31 +1769,32 @@ const SCENARIOS: ScenarioSeed[] = [
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
- * Seeds the 12 pre-built scenarios with their curated personas.
+ * Seeds pre-built scenarios with their curated personas.
  * Run via the Convex dashboard or `npx convex run seed:seedPrebuiltScenarios`.
  *
- * Idempotent: skips seeding if any prebuilt scenarios already exist.
+ * Idempotent per scenario: skips any scenario whose title already exists.
  *
  * Requirements: 1.1, 1.2
  */
 export const seedPrebuiltScenarios = internalMutation({
   args: {},
   handler: async (ctx) => {
-    // Idempotency check: skip if prebuilt scenarios already exist
-    const existing = await ctx.db
+    // Fetch all existing prebuilt scenario titles for idempotency
+    const existingScenarios = await ctx.db
       .query("scenarios")
       .filter((q) => q.eq(q.field("isPrebuilt"), true))
-      .take(1);
-
-    if (existing.length > 0) {
-      console.log("Pre-built scenarios already exist. Skipping seed.");
-      return { seeded: false, count: 0 };
-    }
+      .collect();
+    const existingTitles = new Set(existingScenarios.map((s) => s.title));
 
     const now = Date.now();
     let scenarioCount = 0;
 
     for (const scenarioData of SCENARIOS) {
+      // Skip if this scenario already exists
+      if (existingTitles.has(scenarioData.title)) {
+        continue;
+      }
+
       // Insert scenario first (without personaIds)
       const scenarioId = await ctx.db.insert("scenarios", {
         title: scenarioData.title,
@@ -1493,7 +1840,11 @@ export const seedPrebuiltScenarios = internalMutation({
       scenarioCount++;
     }
 
-    console.log(`Seeded ${scenarioCount} pre-built scenarios.`);
-    return { seeded: true, count: scenarioCount };
+    if (scenarioCount === 0) {
+      console.log("All scenarios already exist. Nothing to seed.");
+    } else {
+      console.log(`Seeded ${scenarioCount} new pre-built scenarios.`);
+    }
+    return { seeded: scenarioCount > 0, count: scenarioCount };
   },
 });

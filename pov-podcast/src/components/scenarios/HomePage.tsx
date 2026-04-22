@@ -7,9 +7,9 @@ import { api } from "../../../convex/_generated/api";
 import { ScenarioCard } from "./ScenarioCard";
 import { useRouter } from "next/navigation";
 
-type Era = "All" | "Modern" | "Contemporary";
+type Era = "All" | "Ancient" | "Medieval" | "Modern" | "Contemporary";
 
-const ERA_FILTER_OPTIONS: Era[] = ["All", "Modern", "Contemporary"];
+const ERA_FILTER_OPTIONS: Era[] = ["All", "Ancient", "Modern", "Contemporary"];
 
 const CONTENT_DISCLAIMER =
   "Persona narratives are AI-generated interpretations inspired by historical events and do not represent verified historical fact.";
@@ -154,7 +154,7 @@ export function HomePage() {
                 Historical Scenarios
               </h2>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                12 curated events — step into the perspectives that shaped history
+                Curated events — step into the perspectives that shaped history
               </p>
             </div>
 

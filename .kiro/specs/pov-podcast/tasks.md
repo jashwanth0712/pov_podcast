@@ -51,25 +51,27 @@ Implement the POV Podcast platform incrementally, starting with the data layer a
 - [x] 4. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [-] 5. Scenario generation pipeline
-  - [ ] 5.1 Implement topic input validation
+- [x] 5. Scenario generation pipeline
+  - [x] 5.1 Implement topic input validation
     - Reject topics shorter than 3 characters with a validation error; accept 3–500 characters
     - _Requirements: 2.2, 2.5_
 
-  - [ ] 5.2 Write property test for scenario topic input validation
+  - [x] 5.2 Write property test for scenario topic input validation
     - **Property 9: Scenario Topic Input Validation**
     - **Validates: Requirements 2.2, 2.5**
 
-  - [ ] 5.3 Implement `generateScenario` Convex action
+  - [x] 5.3 Implement `generateScenario` Convex action
     - Call OpenRouter to produce title, time period, description, up to 6 personas (each with personality description, emotional backstory ≥100 words, speaking style, ideological position, geographic origin, age, gender), and initial dialogue outline
     - Assign ElevenLabs voice IDs via voice matching (geographic/cultural origin, age, gender)
     - Persist scenario and personas to Convex; associate with authenticated user via `ctx.auth`
     - Enforce 30-second timeout; return error and offer retry on failure
     - Enforce maximum of 6 personas per scenario
+    - See [OpenRouter API documentation](./openrouter-api.md) for endpoint format and prompt templates
+    - See [Convex patterns](./convex-patterns.md) for action/mutation patterns
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.6, 2.7, 3.1_
 
-  - [ ] 5.4 Implement `generateAvatars` Convex action
-    - Call RunPod/Gemini endpoint with persona name, role, era, physical description, and personality traits
+  - [x] 5.4 Implement `generateAvatars` Convex action
+    - Call RunPod endpoint with persona name, role, era, physical description, and personality traits
     - Poll `GET /status/{jobId}` until `status === "COMPLETED"`
     - Store profile and portrait image URLs in persona record; set `avatarGenerationStatus`
     - On failure: set status to `"failed"`, schedule background retry (exponential backoff: 1 min, 5 min, 30 min)
@@ -77,21 +79,21 @@ Implement the POV Podcast platform incrementally, starting with the data layer a
     - See [RunPod API documentation](./runpod-api.md) for API format and prompt construction
     - _Requirements: 22.1, 22.2, 22.3, 22.5, 22.6_
 
-  - [ ] 5.5 Implement `ScenarioGenerator` multi-step component
+  - [x] 5.5 Implement `ScenarioGenerator` multi-step component
     - Step 1: topic input with character counter and validation
     - Step 2: animated generation progress showing personas appearing one by one
     - Step 3: `PersonaEditor` review before confirming
     - Navigate to `SessionSetup` on completion
     - _Requirements: 2.1, 2.2, 2.3_
 
-  - [ ] 5.6 Implement `PersonaEditor` component
+  - [x] 5.6 Implement `PersonaEditor` component
     - Render each persona as an expandable card with avatar (loading spinner / initials fallback), name, role, personality summary
     - Support edit (inline expansion with all fields), delete (with confirmation), and add actions
     - Enforce 6-persona maximum with warning
     - Wire to `updatePersona`, `deletePersona` (min 2 personas), and `addPersona` mutations
     - _Requirements: 2.7, 22.4, 22.5_
 
-  - [ ] 5.7 Implement `validateArticleUrl` action and article reference generation
+  - [x] 5.7 Implement `validateArticleUrl` action and article reference generation
     - HEAD-request each generated URL; flag as `isVerified: false` if unreachable
     - Label article references as `isIllustrative: true` for fictional/speculative scenarios
     - _Requirements: 13.7, 13.8_
@@ -134,6 +136,8 @@ Implement the POV Podcast platform incrementally, starting with the data layer a
     - Validate expressiveness (emotional statement, personal struggle reference, or ideological assertion); regenerate once on failure; deliver with `qualityWarning: true` after two failures
     - Validate consistency with persona backstory/ideology (same regeneration budget)
     - Persist turn via `persistDialogueTurn`; update emotional state; check if compaction is needed
+    - See [OpenRouter API documentation](./openrouter-api.md) for dialogue turn generation config
+    - See [Convex patterns](./convex-patterns.md) for action patterns with scheduled mutations
     - _Requirements: 3.3, 3.5, 8.1, 8.3, 8.4, 8.5, 8.6, 15.2, 15.4, 15.8_
 
   - [ ] 8.2 Write property test for expressiveness validation
@@ -221,6 +225,7 @@ Implement the POV Podcast platform incrementally, starting with the data layer a
     - Generate structured summary via OpenRouter capturing key events, emotional arc, ideological positions, and concessions
     - Replace 20 raw messages with single summary prepended with `[COMPACTED HISTORY]` marker
     - Persist summary to `personaAgentStates`; retain raw messages and retry on next turn if compaction fails
+    - See [OpenRouter API documentation](./openrouter-api.md) for context compaction config and prompt template
     - _Requirements: 23.1, 23.2, 23.3, 23.4, 23.5, 23.6, 23.7_
 
   - [ ] 12.2 Write property test for context compaction
@@ -243,6 +248,7 @@ Implement the POV Podcast platform incrementally, starting with the data layer a
     - Call OpenRouter with classification prompt; enforce 2-second timeout
     - Return `SAFE` / `UNSAFE` with reason
     - Log rejected interruptions (session ID, timestamp, reason) to `rejectedInterruptions` — do NOT store full content
+    - See [OpenRouter API documentation](./openrouter-api.md) for content moderation config with timeout
     - _Requirements: 25.1, 25.2, 25.3, 25.4, 25.5_
 
   - [ ] 14.4 Implement `submitInterruption` Convex mutation
@@ -255,6 +261,7 @@ Implement the POV Podcast platform incrementally, starting with the data layer a
   - [ ] 15.1 Implement `VoiceEngine.transcribeSpeech` using ElevenLabs Scribe API
     - `POST /v1/speech-to-text` with `model_id: "scribe_v1"`; populate interruption text field within 3 seconds
     - On error: display error message and retain text input field
+    - **Use ElevenLabs Power** (Kiro skill) to learn STT API details and best practices
     - _Requirements: 6.1, 6.3, 6.4_
 
   - [ ] 15.2 Implement voice input UI in interruption interface
@@ -269,6 +276,7 @@ Implement the POV Podcast platform incrementally, starting with the data layer a
     - Begin playback of first chunk within 2 seconds of stream opening
     - Transition to next turn within 1 second of `isFinal` event
     - On mid-turn stream interruption: attempt resume; fall back to full text transcript
+    - **Use ElevenLabs Power** (Kiro skill) to learn TTS WebSocket streaming, voice settings, and voice ID selection
     - _Requirements: 3.2, 3.6, 3.8, 4.1, 4.5, 24.1, 24.2, 24.3, 24.4, 24.5, 24.6_
 
   - [ ] 16.2 Implement emotional state → voice parameter mapping
