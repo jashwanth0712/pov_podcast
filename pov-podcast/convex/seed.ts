@@ -1,5 +1,6 @@
 import { internalMutation } from "./_generated/server";
 import { matchVoice } from "./voiceMatching";
+import { Id } from "./_generated/dataModel";
 
 const CONTENT_DISCLAIMER =
   "Persona narratives are AI-generated interpretations inspired by historical events and do not represent verified historical fact.";

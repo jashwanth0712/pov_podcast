@@ -98,22 +98,22 @@ Implement the POV Podcast platform incrementally, starting with the data layer a
     - Label article references as `isIllustrative: true` for fictional/speculative scenarios
     - _Requirements: 13.7, 13.8_
 
-- [ ] 6. Checkpoint — Ensure all tests pass
+- [x] 6. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. Session setup and persona agent instantiation
-  - [ ] 7.1 Implement `SessionSetup` component
+- [-] 7. Session setup and persona agent instantiation
+  - [-] 7.1 Implement `SessionSetup` component
     - Depth level picker (Casual / Intermediate / Scholar), optional Calibration Persona flow, turn-taking mode selector (default: Relevance)
     - Persist selected depth level to `userPreferences` via `updateUserDefaultDepthLevel`; load stored default on next session start
     - _Requirements: 14.10, 19.1, 19.2, 19.4, 19.5_
 
-  - [ ] 7.2 Implement `startSession` Convex mutation
+  - [-] 7.2 Implement `startSession` Convex mutation
     - Create session record; derive `userId` from `ctx.auth`
     - Instantiate `personaAgentStates` records for each persona with initial emotional state
     - Create root branch record
     - _Requirements: 3.3, 4.1, 14.10_
 
-  - [ ] 7.3 Implement persona system prompt assembly
+  - [-] 7.3 Implement persona system prompt assembly
     - Build system prompt encoding name, historical role, ≥3 personality traits, emotional backstory (≥200 words), speaking style, ideological position, ≥3 article references, and all pairwise relationship descriptors
     - Apply depth level modifier (Casual / Intermediate / Scholar) to the prompt
     - Apply emotional state modifier (mood, conviction, willingness to concede)

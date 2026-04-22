@@ -6,7 +6,6 @@ import { useConvexAuth } from "convex/react";
 
 import type { Id } from "../../../convex/_generated/dataModel";
 
-// Minimal persona shape needed for the card
 interface PersonaSummary {
   _id: Id<"personas">;
   name: string;
@@ -14,6 +13,8 @@ interface PersonaSummary {
   profileImageUrl?: string | null;
   avatarGenerationStatus: "pending" | "complete" | "failed";
 }
+
+type CardSize = "large" | "medium" | "small";
 
 interface ScenarioCardProps {
   id: Id<"scenarios">;
@@ -24,19 +25,52 @@ interface ScenarioCardProps {
   personas?: PersonaSummary[];
   contentDisclaimer?: string;
   bannerImageUrl?: string | null;
-  /** If provided, called on click instead of navigating directly */
   onSelect?: (id: Id<"scenarios">) => void;
+  size?: CardSize;
+  className?: string;
 }
 
-/** Era badge colour mapping */
-const ERA_COLOURS: Record<string, string> = {
-  Ancient: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-  Medieval: "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
-  Modern: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
-  Contemporary: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
+const SIZE_CONFIG: Record<CardSize, {
+  titleClass: string;
+  descLines: string;
+  descLimit: number;
+  padding: string;
+  avatarSize: string;
+  rounded: string;
+}> = {
+  large: {
+    titleClass: "text-2xl sm:text-3xl",
+    descLines: "line-clamp-2",
+    descLimit: 180,
+    padding: "p-5 sm:p-6",
+    avatarSize: "h-9 w-9",
+    rounded: "rounded-3xl",
+  },
+  medium: {
+    titleClass: "text-lg sm:text-xl",
+    descLines: "line-clamp-2",
+    descLimit: 100,
+    padding: "p-4 sm:p-5",
+    avatarSize: "h-8 w-8",
+    rounded: "rounded-3xl",
+  },
+  small: {
+    titleClass: "text-base sm:text-lg",
+    descLines: "line-clamp-1",
+    descLimit: 60,
+    padding: "p-3 sm:p-4",
+    avatarSize: "h-7 w-7",
+    rounded: "rounded-2xl",
+  },
 };
 
-/** Derive initials from a persona name for the fallback avatar */
+const ERA_COLOURS: Record<string, string> = {
+  Ancient: "bg-amber-500/20 text-amber-200 border-amber-400/30",
+  Medieval: "bg-purple-500/20 text-purple-200 border-purple-400/30",
+  Modern: "bg-blue-500/20 text-blue-200 border-blue-400/30",
+  Contemporary: "bg-emerald-500/20 text-emerald-200 border-emerald-400/30",
+};
+
 function getInitials(name: string): string {
   return name
     .split(" ")
@@ -46,11 +80,10 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
-/** Deterministic background colour for initials avatars */
 const AVATAR_BG_COLOURS = [
-  "bg-rose-400",
-  "bg-orange-400",
-  "bg-amber-400",
+  "bg-rose-500",
+  "bg-orange-500",
+  "bg-amber-500",
   "bg-lime-500",
   "bg-teal-500",
   "bg-sky-500",
@@ -62,19 +95,6 @@ function avatarBg(index: number): string {
   return AVATAR_BG_COLOURS[index % AVATAR_BG_COLOURS.length];
 }
 
-/**
- * ScenarioCard — reusable card component for displaying a historical scenario.
- *
- * Displays:
- * - Era badge (top-left)
- * - Scenario title (bold)
- * - Time period subtitle
- * - Description (≤200 chars)
- * - Up to 6 small circular persona avatar thumbnails
- * - Content disclaimer (small, muted)
- *
- * Requirements: 1.3, 8.2
- */
 export function ScenarioCard({
   id,
   title,
@@ -82,16 +102,15 @@ export function ScenarioCard({
   era,
   description,
   personas = [],
-  contentDisclaimer,
   bannerImageUrl,
   onSelect,
+  size = "medium",
+  className = "",
 }: ScenarioCardProps) {
   const router = useRouter();
   const { isAuthenticated } = useConvexAuth();
+  const config = SIZE_CONFIG[size];
 
-  // Navigate to session setup within 500ms (Req 1.4).
-  // If onSelect is provided, call it instead (for opening detail sheet).
-  // If the user isn't signed in, route them to /auth with a redirect back.
   const handleClick = useCallback(() => {
     if (onSelect) {
       onSelect(id);
@@ -115,18 +134,15 @@ export function ScenarioCard({
     [handleClick]
   );
 
-  // Truncate description to 200 chars (Req 1.3)
   const displayDescription =
-    description.length > 200 ? description.slice(0, 197) + "…" : description;
+    description.length > config.descLimit
+      ? description.slice(0, config.descLimit - 3) + "…"
+      : description;
 
-  // Show up to 6 persona avatars (Req 1.3)
-  const visiblePersonas = personas.slice(0, 6);
+  const visiblePersonas = personas.slice(0, 4);
+  const extraCount = personas.length > 4 ? personas.length - 4 : 0;
 
-  const eraBadgeClass = ERA_COLOURS[era] ?? "bg-zinc-100 text-zinc-700";
-
-  const disclaimer =
-    contentDisclaimer ??
-    "Persona narratives are AI-generated interpretations inspired by historical events and do not represent verified historical fact.";
+  const eraBadgeClass = ERA_COLOURS[era] ?? "bg-zinc-500/20 text-zinc-200 border-zinc-400/30";
 
   return (
     <article
@@ -135,96 +151,100 @@ export function ScenarioCard({
       aria-label={`${title} — ${timePeriod}. Click to start session.`}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      className="
-        group relative flex flex-col rounded-2xl border border-zinc-200
-        bg-white overflow-hidden shadow-sm transition-all duration-150
-        hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-        dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600
-        cursor-pointer select-none
-      "
+      className={`
+        group relative ${config.rounded} overflow-hidden cursor-pointer select-none
+        border border-white/10 bg-zinc-900/50
+        transition-all duration-300 ease-out
+        hover:shadow-2xl hover:shadow-black/30 hover:border-white/20
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950
+        ${className}
+      `}
     >
-      {/* Banner image section */}
-      <div className="relative h-32 w-full bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800">
+      {/* Background image */}
+      <div className="absolute inset-0 bg-gradient-to-br from-zinc-700 to-zinc-900">
         {bannerImageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={bannerImageUrl}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-        {/* Era badge positioned on the banner */}
-        <div className="absolute top-3 left-3">
-          <span
-            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold backdrop-blur-sm ${eraBadgeClass}`}
-            aria-label={`Era: ${era}`}
-          >
-            {era}
-          </span>
-        </div>
-        {/* Title overlay on banner */}
-        <div className="absolute bottom-3 left-4 right-4">
-          <h3 className="text-base font-bold leading-snug text-white drop-shadow-md group-hover:text-blue-200 transition-colors">
-            {title}
-          </h3>
-          <p className="text-xs font-medium text-white/80 mt-0.5">
-            {timePeriod}
-          </p>
-        </div>
       </div>
 
-      {/* Content section */}
-      <div className="flex flex-col gap-3 p-4">
+      {/* Gradient overlay for readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 
-      {/* Description */}
-      <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300 flex-1">
-        {displayDescription}
-      </p>
-
-      {/* Persona avatar row */}
+      {/* Persona avatars - top left, stacked and overlapping (like reference) */}
       {visiblePersonas.length > 0 && (
         <div
-          className="flex items-center gap-1.5"
-          aria-label={`${visiblePersonas.length} persona${visiblePersonas.length !== 1 ? "s" : ""}: ${visiblePersonas.map((p) => p.name).join(", ")}`}
+          className="absolute top-4 left-4 flex items-center gap-2"
+          aria-label={`${personas.length} persona${personas.length !== 1 ? "s" : ""}`}
         >
-          {visiblePersonas.map((persona, i) => (
-            <div
-              key={persona._id}
-              title={`${persona.name} — ${persona.historicalRole}`}
-              className="relative"
-            >
-              {persona.avatarGenerationStatus === "complete" && persona.profileImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={persona.profileImageUrl}
-                  alt={persona.name}
-                  className="h-7 w-7 rounded-full object-cover ring-2 ring-white dark:ring-zinc-900"
-                />
-              ) : (
-                <div
-                  className={`h-7 w-7 rounded-full ring-2 ring-white dark:ring-zinc-900 flex items-center justify-center text-[9px] font-bold text-white ${avatarBg(i)}`}
-                  aria-hidden="true"
-                >
-                  {getInitials(persona.name)}
-                </div>
-              )}
-            </div>
-          ))}
-          {personas.length > 6 && (
-            <span className="text-xs text-zinc-400 dark:text-zinc-500 ml-1">
-              +{personas.length - 6}
+          <div className="flex -space-x-2">
+            {visiblePersonas.map((persona, i) => (
+              <div
+                key={persona._id}
+                title={`${persona.name} — ${persona.historicalRole}`}
+                className="relative"
+                style={{ zIndex: visiblePersonas.length - i }}
+              >
+                {persona.avatarGenerationStatus === "complete" && persona.profileImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={persona.profileImageUrl}
+                    alt={persona.name}
+                    className={`${config.avatarSize} rounded-full object-cover ring-2 ring-white/20 shadow-lg`}
+                  />
+                ) : (
+                  <div
+                    className={`${config.avatarSize} rounded-full ring-2 ring-white/20 shadow-lg flex items-center justify-center text-[10px] font-bold text-white ${avatarBg(i)}`}
+                    aria-hidden="true"
+                  >
+                    {getInitials(persona.name)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          {extraCount > 0 && (
+            <span className="text-xs font-medium text-white/80">
+              +{extraCount} More
             </span>
           )}
         </div>
       )}
 
-      {/* Content disclaimer (Req 8.2) */}
-      <p className="text-[10px] leading-tight text-zinc-400 dark:text-zinc-500 border-t border-zinc-100 dark:border-zinc-800 pt-2">
-        {disclaimer}
-      </p>
+      {/* Content overlay - bottom */}
+      <div className={`absolute inset-x-0 bottom-0 ${config.padding} flex flex-col gap-2`}>
+        {/* Era badge */}
+        <div>
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide backdrop-blur-md border ${eraBadgeClass}`}
+            aria-label={`Era: ${era}`}
+          >
+            {era}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h3 className={`${config.titleClass} font-bold leading-tight text-white drop-shadow-lg`}>
+          {title}
+        </h3>
+
+        {/* Time period */}
+        <p className="text-xs font-medium text-white/70">
+          {timePeriod}
+        </p>
+
+        {/* Description */}
+        <p className={`text-sm leading-relaxed text-white/60 ${config.descLines}`}>
+          {displayDescription}
+        </p>
       </div>
+
+      {/* Glass border effect */}
+      <div className={`absolute inset-0 ${config.rounded} ring-1 ring-inset ring-white/10 pointer-events-none`} />
     </article>
   );
 }

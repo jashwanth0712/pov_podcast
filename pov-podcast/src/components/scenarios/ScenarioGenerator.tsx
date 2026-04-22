@@ -12,6 +12,15 @@ import { PersonaEditor } from "./PersonaEditor";
 
 type Step = "input" | "generating" | "review";
 
+// ─── Topic Suggestions ────────────────────────────────────────────────────────
+
+const TOPIC_SUGGESTIONS = [
+  { icon: "⚔️", title: "Wars & Conflicts", example: "The Cuban Missile Crisis" },
+  { icon: "🗳️", title: "Political Movements", example: "The Suffragette Movement" },
+  { icon: "🔬", title: "Scientific Breakthroughs", example: "The Discovery of Penicillin" },
+  { icon: "🌍", title: "Cultural Shifts", example: "The Renaissance" },
+];
+
 // ─── Step 1: Topic Input ──────────────────────────────────────────────────────
 
 interface TopicInputStepProps {
@@ -39,103 +48,125 @@ function TopicInputStep({ onSubmit, isSubmitting, error }: TopicInputStepProps) 
     onSubmit(topic.trim());
   };
 
+  const handleSuggestionClick = (example: string) => {
+    setTopic(example);
+    inputRef.current?.focus();
+  };
+
   const charCountColour =
     isOverLimit
-      ? "text-red-500"
+      ? "text-red-400"
       : charCount > TOPIC_MAX_LENGTH * 0.9
-      ? "text-amber-500"
-      : "text-zinc-400 dark:text-zinc-500";
+      ? "text-amber-400"
+      : "text-white/30";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6" aria-label="Scenario topic input">
-      <div>
-        <label
-          htmlFor="scenario-topic"
-          className="block text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-2"
-        >
-          What historical topic would you like to explore?
-        </label>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3">
-          Enter any historical event, figure, movement, or era. The more specific, the richer the scenario.
+    <div className="flex flex-col items-center justify-center min-h-[70vh] px-4">
+      {/* Hero heading */}
+      <div className="text-center mb-10">
+        <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
+          Create Your Scenario
+        </h1>
+        <p className="text-lg sm:text-xl text-white/40">
+          Explore history through multiple perspectives
         </p>
+      </div>
+
+      {/* Input form */}
+      <form onSubmit={handleSubmit} className="w-full max-w-2xl space-y-6" aria-label="Scenario topic input">
         <div className="relative">
           <textarea
             id="scenario-topic"
             ref={inputRef}
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="e.g. The Cuban Missile Crisis, The Suffragette Movement, The Partition of India…"
+            placeholder="Enter any historical event, figure, movement, or era..."
             rows={4}
-            maxLength={TOPIC_MAX_LENGTH + 50} // allow slight overage so user sees the error
+            maxLength={TOPIC_MAX_LENGTH + 50}
             aria-describedby="topic-char-count topic-error"
             aria-invalid={isBelowMin || isOverLimit}
             className={`
-              w-full rounded-xl border px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50
-              bg-white dark:bg-zinc-900 resize-none
-              focus:outline-none focus:ring-2 focus:ring-blue-500
-              transition-colors
+              w-full rounded-2xl border px-5 py-4 text-base text-white
+              bg-white/5 backdrop-blur-sm resize-none
+              placeholder:text-white/30
+              focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:bg-white/[0.07]
+              transition-all duration-200
               ${
                 isBelowMin || isOverLimit
-                  ? "border-red-400 dark:border-red-600"
-                  : "border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500"
+                  ? "border-red-500/50"
+                  : "border-white/10 hover:border-white/20"
               }
             `}
           />
           <span
             id="topic-char-count"
             aria-live="polite"
-            className={`absolute bottom-3 right-3 text-xs tabular-nums ${charCountColour}`}
+            className={`absolute bottom-4 right-4 text-xs tabular-nums ${charCountColour}`}
           >
             {charCount}/{TOPIC_MAX_LENGTH}
           </span>
         </div>
 
-        {/* Inline validation feedback */}
+        {/* Validation errors */}
         {isBelowMin && (
-          <p
-            id="topic-error"
-            role="alert"
-            className="mt-2 text-sm text-red-600 dark:text-red-400"
-          >
+          <p id="topic-error" role="alert" className="text-sm text-red-400">
             Topic must be at least {TOPIC_MIN_LENGTH} characters.
           </p>
         )}
         {isOverLimit && (
-          <p
-            id="topic-error"
-            role="alert"
-            className="mt-2 text-sm text-red-600 dark:text-red-400"
-          >
+          <p id="topic-error" role="alert" className="text-sm text-red-400">
             Topic must be no more than {TOPIC_MAX_LENGTH} characters.
           </p>
         )}
-      </div>
 
-      {/* API-level error (e.g. timeout, network failure) */}
-      {error && (
-        <div
-          role="alert"
-          className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+        {/* API error */}
+        {error && (
+          <div
+            role="alert"
+            className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+          >
+            <p className="font-semibold mb-0.5">Generation failed</p>
+            <p className="text-red-400/80">{error}</p>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={!validation.valid || isSubmitting}
+          className="
+            w-full rounded-xl bg-white px-6 py-4 text-base font-semibold text-zinc-900
+            hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50
+            transition-all duration-200 shadow-lg
+          "
+          aria-label="Generate scenario"
         >
-          <p className="font-semibold mb-0.5">Generation failed</p>
-          <p>{error}</p>
-        </div>
-      )}
+          {isSubmitting ? "Generating..." : "Generate Scenario"}
+        </button>
+      </form>
 
-      <button
-        type="submit"
-        disabled={!validation.valid || isSubmitting}
-        className="
-          w-full rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white
-          hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-          transition-colors
-        "
-        aria-label="Generate scenario"
-      >
-        {isSubmitting ? "Generating…" : "Generate Scenario"}
-      </button>
-    </form>
+      {/* Suggestion cards */}
+      <div className="w-full max-w-2xl mt-12">
+        <p className="text-sm text-white/40 text-center mb-4">Or try one of these</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {TOPIC_SUGGESTIONS.map((suggestion) => (
+            <button
+              key={suggestion.title}
+              onClick={() => handleSuggestionClick(suggestion.example)}
+              className="
+                group p-4 rounded-xl border border-white/5 bg-white/[0.02]
+                hover:bg-white/5 hover:border-white/10
+                transition-all duration-200 text-left
+              "
+            >
+              <span className="text-2xl mb-2 block">{suggestion.icon}</span>
+              <span className="text-sm font-medium text-white block mb-1">{suggestion.title}</span>
+              <span className="text-xs text-white/40 line-clamp-1">{suggestion.example}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -153,7 +184,6 @@ function GeneratingStep({ topic }: { topic: string }) {
   const [messageIndex, setMessageIndex] = useState(0);
   const [visiblePersonaCount, setVisiblePersonaCount] = useState(0);
 
-  // Cycle through progress messages
   useEffect(() => {
     const interval = setInterval(() => {
       setMessageIndex((i) => (i + 1) % GENERATION_MESSAGES.length);
@@ -161,7 +191,6 @@ function GeneratingStep({ topic }: { topic: string }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Animate personas appearing one by one (up to 6)
   useEffect(() => {
     const interval = setInterval(() => {
       setVisiblePersonaCount((n) => (n < 6 ? n + 1 : n));
@@ -169,30 +198,34 @@ function GeneratingStep({ topic }: { topic: string }) {
     return () => clearInterval(interval);
   }, []);
 
-  const AVATAR_BG_COLOURS = [
-    "bg-rose-400", "bg-orange-400", "bg-amber-400",
-    "bg-lime-500", "bg-teal-500", "bg-sky-500",
+  const AVATAR_GRADIENTS = [
+    "from-rose-500 to-pink-600",
+    "from-orange-500 to-amber-600",
+    "from-amber-500 to-yellow-600",
+    "from-emerald-500 to-teal-600",
+    "from-blue-500 to-indigo-600",
+    "from-violet-500 to-purple-600",
   ];
 
   return (
     <div
-      className="flex flex-col items-center gap-8 py-6"
+      className="flex flex-col items-center justify-center min-h-[70vh] gap-10 px-4"
       role="status"
       aria-live="polite"
       aria-label="Generating scenario"
     >
       {/* Spinner */}
       <div className="relative">
-        <div className="h-16 w-16 rounded-full border-4 border-zinc-200 dark:border-zinc-700" />
-        <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-blue-500 border-t-transparent animate-spin" />
+        <div className="h-20 w-20 rounded-full border-4 border-white/10" />
+        <div className="absolute inset-0 h-20 w-20 rounded-full border-4 border-purple-500 border-t-transparent animate-spin" />
       </div>
 
       {/* Topic label */}
       <div className="text-center">
-        <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1">
+        <p className="text-sm font-medium text-white/40 uppercase tracking-wider mb-2">
           Generating scenario for
         </p>
-        <p className="text-base font-semibold text-zinc-900 dark:text-zinc-50 max-w-xs truncate">
+        <p className="text-xl font-semibold text-white max-w-md">
           &ldquo;{topic}&rdquo;
         </p>
       </div>
@@ -200,35 +233,35 @@ function GeneratingStep({ topic }: { topic: string }) {
       {/* Cycling progress message */}
       <p
         key={messageIndex}
-        className="text-sm text-zinc-500 dark:text-zinc-400 animate-pulse text-center"
+        className="text-base text-white/50 animate-pulse text-center"
         aria-atomic="true"
       >
         {GENERATION_MESSAGES[messageIndex]}
       </p>
 
       {/* Personas appearing one by one */}
-      <div className="w-full max-w-sm">
-        <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500 mb-3 text-center">
-          Building personas…
+      <div className="w-full max-w-md">
+        <p className="text-sm font-medium text-white/40 mb-4 text-center">
+          Building personas...
         </p>
-        <div className="flex justify-center gap-3 flex-wrap">
+        <div className="flex justify-center gap-4 flex-wrap">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
               className={`
-                h-12 w-12 rounded-full flex items-center justify-center
-                transition-all duration-500
+                h-14 w-14 rounded-full flex items-center justify-center
+                transition-all duration-500 shadow-lg
                 ${
                   i < visiblePersonaCount
-                    ? `${AVATAR_BG_COLOURS[i]} opacity-100 scale-100`
-                    : "bg-zinc-200 dark:bg-zinc-700 opacity-30 scale-75"
+                    ? `bg-gradient-to-br ${AVATAR_GRADIENTS[i]} opacity-100 scale-100`
+                    : "bg-white/5 opacity-30 scale-75"
                 }
               `}
               aria-hidden="true"
             >
               {i < visiblePersonaCount && (
                 <svg
-                  className="h-6 w-6 text-white"
+                  className="h-7 w-7 text-white"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                   aria-hidden="true"
@@ -241,8 +274,8 @@ function GeneratingStep({ topic }: { topic: string }) {
         </div>
       </div>
 
-      <p className="text-xs text-zinc-400 dark:text-zinc-500">
-        This may take up to 30 seconds…
+      <p className="text-sm text-white/30">
+        This may take up to 30 seconds...
       </p>
     </div>
   );
