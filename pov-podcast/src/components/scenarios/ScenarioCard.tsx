@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
+import { useConvexAuth } from "convex/react";
 
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -81,11 +82,18 @@ export function ScenarioCard({
   contentDisclaimer,
 }: ScenarioCardProps) {
   const router = useRouter();
+  const { isAuthenticated } = useConvexAuth();
 
-  // Navigate to session setup within 500ms (Req 1.4)
+  // Navigate to session setup within 500ms (Req 1.4).
+  // If the user isn't signed in, route them to /auth with a redirect back.
   const handleClick = useCallback(() => {
-    router.push(`/session/setup/${id}`);
-  }, [router, id]);
+    const target = `/session/setup/${id}`;
+    if (isAuthenticated) {
+      router.push(target);
+    } else {
+      router.push(`/auth?redirect=${encodeURIComponent(target)}`);
+    }
+  }, [router, id, isAuthenticated]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

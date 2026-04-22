@@ -1,60 +1,8 @@
 "use node";
 
-import { action, mutation, internalMutation } from "./_generated/server";
+import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
-
-/**
- * Update persona avatar fields after generation.
- */
-export const updatePersonaAvatarStatus = internalMutation({
-  args: {
-    personaId: v.id("personas"),
-    profileImageUrl: v.optional(v.string()),
-    portraitImageUrl: v.optional(v.string()),
-    avatarGenerationStatus: v.union(
-      v.literal("pending"),
-      v.literal("complete"),
-      v.literal("failed")
-    ),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.personaId, {
-      profileImageUrl: args.profileImageUrl,
-      portraitImageUrl: args.portraitImageUrl,
-      avatarGenerationStatus: args.avatarGenerationStatus,
-    });
-  },
-});
-
-/**
- * Schedule a retry for avatar generation with exponential backoff.
- * Backoff schedule: 1 min, 5 min, 30 min (Requirements 22.5)
- */
-export const scheduleAvatarRetry = internalMutation({
-  args: {
-    personaId: v.id("personas"),
-    attemptNumber: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const backoffMs = [
-      1 * 60 * 1000,   // 1 minute
-      5 * 60 * 1000,   // 5 minutes
-      30 * 60 * 1000,  // 30 minutes
-    ];
-
-    if (args.attemptNumber >= backoffMs.length) {
-      // Max retries exhausted — leave status as "failed"
-      return;
-    }
-
-    const delayMs = backoffMs[args.attemptNumber];
-    await ctx.scheduler.runAfter(delayMs, api.generateAvatars.retryGenerateAvatars, {
-      personaId: args.personaId,
-      attemptNumber: args.attemptNumber + 1,
-    });
-  },
-});
 
 /**
  * Core avatar generation logic — shared between initial generation and retries.
@@ -174,11 +122,11 @@ export const generateAvatars = action({
 
     if (!runpodEndpointUrl || !geminiModelId) {
       // Mark as failed and schedule retry
-      await ctx.runMutation(internal.generateAvatars.updatePersonaAvatarStatus, {
+      await ctx.runMutation(internal.avatarMutations.updatePersonaAvatarStatus, {
         personaId: args.personaId,
         avatarGenerationStatus: "failed",
       });
-      await ctx.runMutation(internal.generateAvatars.scheduleAvatarRetry, {
+      await ctx.runMutation(internal.avatarMutations.scheduleAvatarRetry, {
         personaId: args.personaId,
         attemptNumber: 0,
       });
@@ -219,7 +167,7 @@ export const generateAvatars = action({
       );
 
       // Store image URLs (Requirement 22.3)
-      await ctx.runMutation(internal.generateAvatars.updatePersonaAvatarStatus, {
+      await ctx.runMutation(internal.avatarMutations.updatePersonaAvatarStatus, {
         personaId: args.personaId,
         profileImageUrl,
         portraitImageUrl,
@@ -229,11 +177,11 @@ export const generateAvatars = action({
       return { success: true };
     } catch (err) {
       // On failure: set status to "failed", schedule background retry (Requirement 22.5)
-      await ctx.runMutation(internal.generateAvatars.updatePersonaAvatarStatus, {
+      await ctx.runMutation(internal.avatarMutations.updatePersonaAvatarStatus, {
         personaId: args.personaId,
         avatarGenerationStatus: "failed",
       });
-      await ctx.runMutation(internal.generateAvatars.scheduleAvatarRetry, {
+      await ctx.runMutation(internal.avatarMutations.scheduleAvatarRetry, {
         personaId: args.personaId,
         attemptNumber: 0,
       });
@@ -262,7 +210,7 @@ export const retryGenerateAvatars = action({
 
     if (!runpodEndpointUrl || !geminiModelId) {
       // Schedule next retry if attempts remain
-      await ctx.runMutation(internal.generateAvatars.scheduleAvatarRetry, {
+      await ctx.runMutation(internal.avatarMutations.scheduleAvatarRetry, {
         personaId: args.personaId,
         attemptNumber: args.attemptNumber,
       });
@@ -300,7 +248,7 @@ export const retryGenerateAvatars = action({
         era
       );
 
-      await ctx.runMutation(internal.generateAvatars.updatePersonaAvatarStatus, {
+      await ctx.runMutation(internal.avatarMutations.updatePersonaAvatarStatus, {
         personaId: args.personaId,
         profileImageUrl,
         portraitImageUrl,
@@ -310,7 +258,7 @@ export const retryGenerateAvatars = action({
       return { success: true };
     } catch (err) {
       // Schedule next retry
-      await ctx.runMutation(internal.generateAvatars.scheduleAvatarRetry, {
+      await ctx.runMutation(internal.avatarMutations.scheduleAvatarRetry, {
         personaId: args.personaId,
         attemptNumber: args.attemptNumber,
       });

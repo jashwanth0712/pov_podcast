@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useTransition } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useConvexAuth } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../../convex/_generated/api";
 import { ScenarioCard } from "./ScenarioCard";
 import { useRouter } from "next/navigation";
@@ -27,13 +28,19 @@ const CONTENT_DISCLAIMER =
  */
 export function HomePage() {
   const router = useRouter();
+  const { isAuthenticated } = useConvexAuth();
+  const { signOut } = useAuthActions();
   const [selectedEra, setSelectedEra] = useState<Era>("All");
   // useTransition keeps the filter update non-blocking and within 300ms (Req 1.6)
   const [isPending, startTransition] = useTransition();
 
-  // Fetch all scenarios from Convex
+  // Fetch all scenarios from Convex. Scenarios are public; user scenarios
+  // require auth, so skip that query when signed out.
   const allScenarios = useQuery(api.scenarios.getScenarios, {});
-  const userScenarios = useQuery(api.scenarios.getUserScenarios, {});
+  const userScenarios = useQuery(
+    api.scenarios.getUserScenarios,
+    isAuthenticated ? {} : "skip"
+  );
 
   // Separate pre-built from user-generated
   const prebuiltScenarios = useMemo(
@@ -55,7 +62,19 @@ export function HomePage() {
   };
 
   const handleCreateScenario = () => {
-    router.push("/scenario/create");
+    if (isAuthenticated) {
+      router.push("/scenario/create");
+    } else {
+      router.push(`/auth?redirect=${encodeURIComponent("/scenario/create")}`);
+    }
+  };
+
+  const handleSignIn = () => {
+    router.push("/auth");
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   const isLoading = allScenarios === undefined;
@@ -73,7 +92,7 @@ export function HomePage() {
               Experience history through every perspective
             </p>
           </div>
-          <nav aria-label="Main navigation">
+          <nav aria-label="Main navigation" className="flex items-center gap-2">
             <button
               onClick={handleCreateScenario}
               className="
@@ -88,6 +107,37 @@ export function HomePage() {
               <span aria-hidden="true">+</span>
               Create Scenario
             </button>
+            {isAuthenticated ? (
+              <button
+                onClick={handleSignOut}
+                className="
+                  inline-flex items-center rounded-full border border-zinc-200
+                  bg-white px-4 py-2 text-sm font-semibold text-zinc-700
+                  hover:bg-zinc-50 hover:border-zinc-300
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+                  dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-700
+                  transition-colors
+                "
+                aria-label="Sign out"
+              >
+                Sign out
+              </button>
+            ) : (
+              <button
+                onClick={handleSignIn}
+                className="
+                  inline-flex items-center rounded-full border border-zinc-200
+                  bg-white px-4 py-2 text-sm font-semibold text-zinc-700
+                  hover:bg-zinc-50 hover:border-zinc-300
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+                  dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-700
+                  transition-colors
+                "
+                aria-label="Sign in"
+              >
+                Sign in
+              </button>
+            )}
           </nav>
         </div>
       </header>
@@ -206,7 +256,28 @@ export function HomePage() {
             </button>
           </div>
 
-          {userScenarios === undefined ? (
+          {!isAuthenticated ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 py-20 text-center px-6">
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+                Sign in to create and view your scenarios
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400 max-w-xs">
+                Your custom scenarios are saved to your account.
+              </p>
+              <button
+                onClick={handleSignIn}
+                className="
+                  mt-5 inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2.5
+                  text-sm font-semibold text-white shadow-sm
+                  hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2
+                  focus-visible:ring-blue-500 focus-visible:ring-offset-2
+                  transition-colors
+                "
+              >
+                Sign in
+              </button>
+            </div>
+          ) : userScenarios === undefined ? (
             <ScenarioGridSkeleton count={3} />
           ) : userScenarios.length === 0 ? (
             /* Empty state CTA */

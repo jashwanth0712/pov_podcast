@@ -1,31 +1,8 @@
 "use node";
 
-import { action, internalMutation } from "./_generated/server";
+import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
-
-/**
- * Update article reference verification status for a persona.
- */
-export const updateArticleVerification = internalMutation({
-  args: {
-    personaId: v.id("personas"),
-    articleReferences: v.array(
-      v.object({
-        url: v.string(),
-        title: v.string(),
-        isVerified: v.boolean(),
-        isIllustrative: v.boolean(),
-        ideologicalAlignment: v.string(),
-      })
-    ),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.personaId, {
-      articleReferences: args.articleReferences,
-    });
-  },
-});
 
 /**
  * validateArticleUrl action.
@@ -121,7 +98,7 @@ export const validateScenarioArticles = action({
       );
 
       // Update persona with verified article references
-      await ctx.runMutation(internal.validateArticleUrl.updateArticleVerification, {
+      await ctx.runMutation(internal.articleMutations.updateArticleVerification, {
         personaId: persona._id,
         articleReferences: updatedRefs,
       });
