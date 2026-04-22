@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useCallback } from "react";
 import { useQuery, useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { ScenarioCard } from "./ScenarioCard";
+import { ScenarioDetailSheet } from "./ScenarioDetailSheet";
 import { useRouter } from "next/navigation";
 
 type Era = "All" | "Ancient" | "Medieval" | "Modern" | "Contemporary";
@@ -31,8 +33,17 @@ export function HomePage() {
   const { isAuthenticated } = useConvexAuth();
   const { signOut } = useAuthActions();
   const [selectedEra, setSelectedEra] = useState<Era>("All");
+  const [selectedScenarioId, setSelectedScenarioId] = useState<Id<"scenarios"> | null>(null);
   // useTransition keeps the filter update non-blocking and within 300ms (Req 1.6)
   const [isPending, startTransition] = useTransition();
+
+  const handleScenarioSelect = useCallback((id: Id<"scenarios">) => {
+    setSelectedScenarioId(id);
+  }, []);
+
+  const handleSheetClose = useCallback(() => {
+    setSelectedScenarioId(null);
+  }, []);
 
   // Fetch all scenarios from Convex. Scenarios are public; user scenarios
   // require auth, so skip that query when signed out.
@@ -219,6 +230,7 @@ export function HomePage() {
                   key={scenario._id}
                   scenario={scenario}
                   contentDisclaimer={CONTENT_DISCLAIMER}
+                  onSelect={handleScenarioSelect}
                 />
               ))}
             </div>
@@ -333,13 +345,17 @@ export function HomePage() {
           )}
         </section>
       </main>
+
+      {/* Scenario detail sheet for pre-built scenarios */}
+      <ScenarioDetailSheet
+        scenarioId={selectedScenarioId}
+        onClose={handleSheetClose}
+      />
     </div>
   );
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
-
-import type { Id } from "../../../convex/_generated/dataModel";
 
 interface ScenarioDoc {
   _id: Id<"scenarios">;
@@ -359,9 +375,11 @@ interface ScenarioDoc {
 function ScenarioCardWithPersonas({
   scenario,
   contentDisclaimer,
+  onSelect,
 }: {
   scenario: ScenarioDoc;
   contentDisclaimer: string;
+  onSelect?: (id: Id<"scenarios">) => void;
 }) {
   const personas = useQuery(api.scenarios.getPersonasForScenario, {
     scenarioId: scenario._id,
@@ -376,6 +394,7 @@ function ScenarioCardWithPersonas({
       description={scenario.description}
       personas={personas ?? []}
       contentDisclaimer={contentDisclaimer}
+      onSelect={onSelect}
     />
   );
 }

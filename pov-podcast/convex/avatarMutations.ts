@@ -9,7 +9,7 @@ export const updatePersonaAvatarStatus = internalMutation({
   args: {
     personaId: v.id("personas"),
     profileImageUrl: v.optional(v.string()),
-    portraitImageUrl: v.optional(v.string()),
+    profileImageStorageId: v.optional(v.id("_storage")),
     avatarGenerationStatus: v.union(
       v.literal("pending"),
       v.literal("complete"),
@@ -17,11 +17,18 @@ export const updatePersonaAvatarStatus = internalMutation({
     ),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.personaId, {
-      profileImageUrl: args.profileImageUrl,
-      portraitImageUrl: args.portraitImageUrl,
+    const updateFields: Record<string, unknown> = {
       avatarGenerationStatus: args.avatarGenerationStatus,
-    });
+    };
+
+    if (args.profileImageUrl !== undefined) {
+      updateFields.profileImageUrl = args.profileImageUrl;
+    }
+    if (args.profileImageStorageId !== undefined) {
+      updateFields.profileImageStorageId = args.profileImageStorageId;
+    }
+
+    await ctx.db.patch(args.personaId, updateFields);
   },
 });
 

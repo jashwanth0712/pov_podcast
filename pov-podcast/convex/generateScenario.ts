@@ -4,6 +4,7 @@ import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 import { matchVoice } from "./voiceMatching";
+import { models } from "./lib/modelConfig";
 
 /**
  * Validates a scenario topic string.
@@ -92,41 +93,83 @@ export const generateScenario = action({
       return { success: false, error: "User account not found." };
     }
 
-    const openRouterModel = process.env.OPENROUTER_MODEL;
-    if (!openRouterModel) {
-      return { success: false, error: "OpenRouter model is not configured." };
-    }
-
     const openRouterApiKey = process.env.OPENROUTER_API_KEY;
     if (!openRouterApiKey) {
       return { success: false, error: "OpenRouter API key is not configured." };
     }
 
+    // JSON schema for structured output
+    const jsonSchema = {
+      name: "scenario_response",
+      strict: true,
+      schema: {
+        type: "object",
+        required: ["title", "timePeriod", "era", "description", "initialDialogueOutline", "personas"],
+        additionalProperties: false,
+        properties: {
+          title: { type: "string", description: "Concise, evocative title" },
+          timePeriod: { type: "string", description: "e.g. '1939–1945'" },
+          era: { type: "string", enum: ["Ancient", "Medieval", "Modern", "Contemporary"] },
+          description: { type: "string", description: "Max 200 characters, compelling summary" },
+          initialDialogueOutline: { type: "string", description: "2-3 sentence outline of conversation start" },
+          personas: {
+            type: "array",
+            items: {
+              type: "object",
+              required: ["name", "historicalRole", "personalityTraits", "emotionalBackstory", "speakingStyle", "ideologicalPosition", "geographicOrigin", "estimatedAge", "gender", "articleReferences"],
+              additionalProperties: false,
+              properties: {
+                name: { type: "string" },
+                historicalRole: { type: "string" },
+                personalityTraits: { type: "array", items: { type: "string" } },
+                emotionalBackstory: { type: "string", description: "Minimum 100 words" },
+                speakingStyle: { type: "string" },
+                ideologicalPosition: { type: "string" },
+                geographicOrigin: { type: "string" },
+                estimatedAge: { type: "integer" },
+                gender: { type: "string", enum: ["male", "female", "non-binary"] },
+                articleReferences: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    required: ["url", "title"],
+                    additionalProperties: false,
+                    properties: {
+                      url: { type: "string" },
+                      title: { type: "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
     // Build the generation prompt
-    const systemPrompt = `You are a historical scenario generator for an interactive podcast platform. 
+    const systemPrompt = `You are a historical scenario generator for an interactive podcast platform.
 Generate a rich, historically grounded scenario based on the user's topic.
 
-Return a JSON object with this exact structure:
+You must return a JSON object with this exact structure:
 {
-  "title": "string (concise, evocative title)",
-  "timePeriod": "string (e.g. '1939–1945')",
+  "title": "string - concise, evocative title",
+  "timePeriod": "string - e.g. '1939–1945'",
   "era": "Ancient" | "Medieval" | "Modern" | "Contemporary",
-  "description": "string (max 200 characters, compelling summary)",
-  "initialDialogueOutline": "string (2-3 sentence outline of how the conversation should begin)",
+  "description": "string - max 200 characters, compelling summary",
+  "initialDialogueOutline": "string - 2-3 sentence outline of conversation start",
   "personas": [
     {
-      "name": "string (persona name or archetype)",
-      "historicalRole": "string (their role in this event)",
+      "name": "string - persona name",
+      "historicalRole": "string - their role in this event",
       "personalityTraits": ["trait1", "trait2", "trait3"],
-      "emotionalBackstory": "string (minimum 100 words — their personal history, motivations, fears, and emotional connection to this event)",
-      "speakingStyle": "string (how they speak — formal, colloquial, regional dialect, etc.)",
-      "ideologicalPosition": "string (their political/moral/philosophical stance)",
-      "geographicOrigin": "string (country or region they are from)",
+      "emotionalBackstory": "string - minimum 100 words with personal history, motivations, fears",
+      "speakingStyle": "string - how they speak",
+      "ideologicalPosition": "string - political/moral/philosophical stance",
+      "geographicOrigin": "string - country or region",
       "estimatedAge": number,
       "gender": "male" | "female" | "non-binary",
       "articleReferences": [
-        { "url": "string", "title": "string" },
-        { "url": "string", "title": "string" },
         { "url": "string", "title": "string" }
       ]
     }
@@ -134,11 +177,10 @@ Return a JSON object with this exact structure:
 }
 
 Rules:
-- Generate between 2 and 6 personas (maximum 6)
+- Generate between 4 and 6 personas (minimum 4, maximum 6)
 - Each persona must have a distinct perspective and emotional connection to the event
 - Emotional backstories must be at least 100 words
-- Article references should be plausibly real URLs from reputable historical sources
-- The era must be one of: Ancient, Medieval, Modern, Contemporary
+- Article references should be plausibly real URLs from reputable historical sources (3 per persona)
 - Ensure diverse perspectives (different sides, roles, social classes)`;
 
     const userPrompt = `Generate a historical scenario for the topic: "${args.topic}"`;
@@ -159,14 +201,14 @@ Rules:
           "X-Title": "POV Podcast",
         },
         body: JSON.stringify({
-          model: openRouterModel,
+          model: models.thinking,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
           ],
           max_tokens: 4000,
           temperature: 0.8,
-          response_format: { type: "json_object" },
+          response_format: { type: "json_schema", json_schema: jsonSchema },
         }),
         signal: controller.signal,
       });
@@ -257,6 +299,11 @@ Rules:
         personaId,
       });
     }
+
+    // Trigger banner generation for the scenario
+    await ctx.scheduler.runAfter(0, api.generateBanner.generateBanner, {
+      scenarioId: result.scenarioId,
+    });
 
     // Trigger article URL validation for each persona's references
     await ctx.scheduler.runAfter(0, api.validateArticleUrl.validateScenarioArticles, {

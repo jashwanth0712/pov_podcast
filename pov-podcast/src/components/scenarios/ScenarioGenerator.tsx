@@ -268,30 +268,51 @@ function ReviewStep({ scenarioId, onConfirm, onBack }: ReviewStepProps) {
     );
   }
 
+  if (scenario === null) {
+    return (
+      <div className="text-center py-12 text-zinc-500">
+        Scenario not found.
+      </div>
+    );
+  }
+
+  const ERA_COLOURS: Record<string, string> = {
+    Ancient: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+    Medieval: "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
+    Modern: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+    Contemporary: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Scenario summary */}
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 p-4">
-        <div className="flex items-start gap-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-zinc-900 dark:text-zinc-50 text-sm">
-              {scenario.title}
-            </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              {scenario.timePeriod} · {scenario.era}
-            </p>
-            <p className="text-sm text-zinc-600 dark:text-zinc-300 mt-2 leading-relaxed">
-              {scenario.description}
-            </p>
-          </div>
+      <div className="pb-6 border-b border-zinc-200 dark:border-zinc-700">
+        <div className="flex items-center gap-2 mb-3">
+          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${ERA_COLOURS[scenario.era] ?? "bg-zinc-100 text-zinc-700"}`}>
+            {scenario.era}
+          </span>
+          <span className="text-sm text-zinc-400 dark:text-zinc-500">
+            {scenario.timePeriod}
+          </span>
         </div>
+        <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
+          {scenario.title}
+        </h2>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+          {scenario.description}
+        </p>
       </div>
 
       {/* Persona editor */}
       <div>
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-3">
-          Personas ({personas.length}/6)
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+            Personas
+          </h3>
+          <span className="text-sm text-zinc-400 dark:text-zinc-500">
+            {personas.length}/6
+          </span>
+        </div>
         <PersonaEditor
           scenarioId={scenarioId}
           personas={personas.map((p) => ({
@@ -307,7 +328,6 @@ function ReviewStep({ scenarioId, onConfirm, onBack }: ReviewStepProps) {
             gender: p.gender,
             voiceId: p.voiceId,
             profileImageUrl: p.profileImageUrl,
-            portraitImageUrl: p.portraitImageUrl,
             avatarGenerationStatus: p.avatarGenerationStatus,
           }))}
         />
@@ -424,7 +444,7 @@ export function ScenarioGenerator() {
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       {/* Header */}
       <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky top-0 z-10">
-        <div className="mx-auto max-w-2xl px-4 sm:px-6 py-4 flex items-center gap-4">
+        <div className="mx-auto max-w-xl px-4 sm:px-6 py-4 flex items-center gap-4">
           <button
             onClick={() => router.push("/")}
             className="
@@ -455,7 +475,7 @@ export function ScenarioGenerator() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 sm:px-6 py-8">
+      <main className="mx-auto max-w-xl px-4 sm:px-6 py-8">
         {/* Step progress indicator */}
         <nav
           aria-label="Scenario creation steps"

@@ -21,6 +21,13 @@ export default defineSchema({
     personaIds: v.array(v.id("personas")),
     initialDialogueOutline: v.string(),
     contentDisclaimer: v.string(),
+    bannerImageUrl: v.optional(v.string()),
+    bannerImageStorageId: v.optional(v.id("_storage")),
+    bannerGenerationStatus: v.optional(v.union(
+      v.literal("pending"),
+      v.literal("complete"),
+      v.literal("failed")
+    )),
   }).index("by_era", ["era"]).index("by_createdBy", ["createdBy"]),
 
   personas: defineTable({
@@ -45,7 +52,7 @@ export default defineSchema({
       })
     ),
     profileImageUrl: v.optional(v.string()),
-    portraitImageUrl: v.optional(v.string()),
+    profileImageStorageId: v.optional(v.id("_storage")),
     avatarGenerationStatus: v.union(
       v.literal("pending"),
       v.literal("complete"),

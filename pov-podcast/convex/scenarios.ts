@@ -219,7 +219,7 @@ export const addPersona = mutation({
       voiceId: args.voiceId,
       articleReferences: [],
       profileImageUrl: undefined,
-      portraitImageUrl: undefined,
+      profileImageStorageId: undefined,
       avatarGenerationStatus: "pending",
     });
 

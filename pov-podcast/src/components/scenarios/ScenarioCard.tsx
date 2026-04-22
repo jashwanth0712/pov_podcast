@@ -23,6 +23,8 @@ interface ScenarioCardProps {
   description: string;
   personas?: PersonaSummary[];
   contentDisclaimer?: string;
+  /** If provided, called on click instead of navigating directly */
+  onSelect?: (id: Id<"scenarios">) => void;
 }
 
 /** Era badge colour mapping */
@@ -80,20 +82,26 @@ export function ScenarioCard({
   description,
   personas = [],
   contentDisclaimer,
+  onSelect,
 }: ScenarioCardProps) {
   const router = useRouter();
   const { isAuthenticated } = useConvexAuth();
 
   // Navigate to session setup within 500ms (Req 1.4).
+  // If onSelect is provided, call it instead (for opening detail sheet).
   // If the user isn't signed in, route them to /auth with a redirect back.
   const handleClick = useCallback(() => {
+    if (onSelect) {
+      onSelect(id);
+      return;
+    }
     const target = `/session/setup/${id}`;
     if (isAuthenticated) {
       router.push(target);
     } else {
       router.push(`/auth?redirect=${encodeURIComponent(target)}`);
     }
-  }, [router, id, isAuthenticated]);
+  }, [router, id, isAuthenticated, onSelect]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

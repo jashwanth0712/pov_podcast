@@ -58,6 +58,7 @@ export const persistGeneratedScenario = mutation({
       initialDialogueOutline: args.initialDialogueOutline,
       contentDisclaimer:
         "Persona narratives are AI-generated interpretations inspired by historical events and do not represent verified historical fact.",
+      bannerGenerationStatus: "pending",
     });
 
     const personaIds = [];
@@ -76,7 +77,7 @@ export const persistGeneratedScenario = mutation({
         voiceId: persona.voiceId,
         articleReferences: persona.articleReferences,
         profileImageUrl: undefined,
-        portraitImageUrl: undefined,
+        profileImageStorageId: undefined,
         avatarGenerationStatus: "pending",
       });
       personaIds.push(personaId);

@@ -1,0 +1,516 @@
+{
+  "pendingAvatars": [
+    {
+      "name": "Hans Müller",
+      "personaId": "kn70sgvj73mtd4wjx8n8zst4p585af6j",
+      "scenarioTitle": "World War II: The Fall of Berlin"
+    },
+    {
+      "name": "Natalya Petrova",
+      "personaId": "kn74r79sa8j9r381pms8aanzrs85av8v",
+      "scenarioTitle": "World War II: The Fall of Berlin"
+    },
+    {
+      "name": "James Crawford",
+      "personaId": "kn77r754pewc5h2fhdzhx8bm7d85b11g",
+      "scenarioTitle": "World War II: The Fall of Berlin"
+    },
+    {
+      "name": "Ruth Goldberg",
+      "personaId": "kn74re13gk0g7fx7q1aw7pckmh85bhbf",
+      "scenarioTitle": "World War II: The Fall of Berlin"
+    },
+    {
+      "name": "Hiroshi Tanaka",
+      "personaId": "kn7fa4pws9cg5csbj75aewsz9x85aydr",
+      "scenarioTitle": "World War II: The Fall of Berlin"
+    },
+    {
+      "name": "Marie Leclerc",
+      "personaId": "kn771yjx8gg5nqx5svp9gccved85aakc",
+      "scenarioTitle": "World War II: The Fall of Berlin"
+    },
+    {
+      "name": "Amrit Singh",
+      "personaId": "kn78pj93zgdsy3fn8rsjakmjah85a4af",
+      "scenarioTitle": "The Partition of India"
+    },
+    {
+      "name": "Fatima Begum",
+      "personaId": "kn7arnnns0radm4xx6r92zb86x85b620",
+      "scenarioTitle": "The Partition of India"
+    },
+    {
+      "name": "Cyril Radcliffe",
+      "personaId": "kn7669473xy3cwd17ec5t94nph85a7qn",
+      "scenarioTitle": "The Partition of India"
+    },
+    {
+      "name": "Begum Jahanara Shah",
+      "personaId": "kn79a9qgr28f4n4a2165xgbk6s85azyt",
+      "scenarioTitle": "The Partition of India"
+    },
+    {
+      "name": "Baldev Kumar",
+      "personaId": "kn72fz5psd17egj3b7x8yysfph85bcqz",
+      "scenarioTitle": "The Partition of India"
+    },
+    {
+      "name": "Ayesha Nawaz",
+      "personaId": "kn74005jr37qymh6nhsqbeb63x85bphh",
+      "scenarioTitle": "The Partition of India"
+    },
+    {
+      "name": "Margaret Whitfield",
+      "personaId": "kn783z6dbdw689gbqpqw20pwtd85a86b",
+      "scenarioTitle": "The Sinking of the Titanic"
+    },
+    {
+      "name": "Padraig O'Brien",
+      "personaId": "kn779xn9b84hp2rs8rxp9sfgzs85bzf3",
+      "scenarioTitle": "The Sinking of the Titanic"
+    },
+    {
+      "name": "Thomas Andrews",
+      "personaId": "kn7f0ty884j7x1gsjz9r9cvb1d85ak67",
+      "scenarioTitle": "The Sinking of the Titanic"
+    },
+    {
+      "name": "Mei Chen",
+      "personaId": "kn70phpfev9spyr8chgekb81g185bwg5",
+      "scenarioTitle": "The Sinking of the Titanic"
+    },
+    {
+      "name": "Violet Jessop",
+      "personaId": "kn7a9yny66x162exzm23f5ps4x85b7nh",
+      "scenarioTitle": "The Sinking of the Titanic"
+    },
+    {
+      "name": "J. Bruce Ismay",
+      "personaId": "kn75a1szxt44yebxxzx0rfbcns85bwjk",
+      "scenarioTitle": "The Sinking of the Titanic"
+    },
+    {
+      "name": "Keiko Yamamoto",
+      "personaId": "kn7bectjaphnxx6mnjwyy9pz9h85b3sr",
+      "scenarioTitle": "Hiroshima: The Atomic Dawn"
+    },
+    {
+      "name": "Colonel Paul Tibbets",
+      "personaId": "kn76m8eq3bkfyj3jqyqngs2pf985b9fa",
+      "scenarioTitle": "Hiroshima: The Atomic Dawn"
+    },
+    {
+      "name": "Dr. Robert Oppenheimer",
+      "personaId": "kn756pv1c5h084vh96tw64xh9h85besw",
+      "scenarioTitle": "Hiroshima: The Atomic Dawn"
+    },
+    {
+      "name": "Setsuko Thurlow",
+      "personaId": "kn72e421kdyewep9dhtfa9favx85bmx1",
+      "scenarioTitle": "Hiroshima: The Atomic Dawn"
+    },
+    {
+      "name": "Harry Truman",
+      "personaId": "kn767c66qca4fqje610qj55akx85bwkd",
+      "scenarioTitle": "Hiroshima: The Atomic Dawn"
+    },
+    {
+      "name": "Dr. Michihiko Hachiya",
+      "personaId": "kn7dxt9nvbn79g9ngxe1gec8p585a9x3",
+      "scenarioTitle": "Hiroshima: The Atomic Dawn"
+    },
+    {
+      "name": "Mary Kelly",
+      "personaId": "kn74tzf0kncpmtzk2hj4nhsg1185beef",
+      "scenarioTitle": "Jack the Ripper: The Whitechapel Murders"
+    },
+    {
+      "name": "Inspector Frederick Abberline",
+      "personaId": "kn7fjmwq76zbzqxfxn9e17cp8x85am6z",
+      "scenarioTitle": "Jack the Ripper: The Whitechapel Murders"
+    },
+    {
+      "name": "Dr. Thomas Bond",
+      "personaId": "kn7ewfv8jvhrs2zs6zkj014tn585acs3",
+      "scenarioTitle": "Jack the Ripper: The Whitechapel Murders"
+    },
+    {
+      "name": "Annie Chapman's Ghost",
+      "personaId": "kn7c7mceyhs94jecyewn29px7h85byyv",
+      "scenarioTitle": "Jack the Ripper: The Whitechapel Murders"
+    },
+    {
+      "name": "George Lusk",
+      "personaId": "kn795932bx33s47ev6jr20vd0585bxr9",
+      "scenarioTitle": "Jack the Ripper: The Whitechapel Murders"
+    },
+    {
+      "name": "Henrietta Barnett",
+      "personaId": "kn74e1wrpdfmn25cvqgy0aha4h85a750",
+      "scenarioTitle": "Jack the Ripper: The Whitechapel Murders"
+    },
+    {
+      "name": "Neil Armstrong",
+      "personaId": "kn7eew5prtw2n8vtryvx77j3yd85b1vb",
+      "scenarioTitle": "The Moon Landing"
+    },
+    {
+      "name": "Ralph Abernathy",
+      "personaId": "kn7794qxdkn4jm5j6trc6n2af585bx0k",
+      "scenarioTitle": "The Moon Landing"
+    },
+    {
+      "name": "Valentina Tereshkova",
+      "personaId": "kn7bwfbxs4b6tanc9wffh72j7585bdhb",
+      "scenarioTitle": "The Moon Landing"
+    },
+    {
+      "name": "Wernher von Braun",
+      "personaId": "kn70jmvcbnka09fye66dp6k9yd85ab60",
+      "scenarioTitle": "The Moon Landing"
+    },
+    {
+      "name": "Katherine Johnson",
+      "personaId": "kn774kfm4j4cyh6jcw5ct1g23585acr8",
+      "scenarioTitle": "The Moon Landing"
+    },
+    {
+      "name": "Gil Scott-Heron",
+      "personaId": "kn7bxec4qpt67wbkebqqcbpqys85b5ew",
+      "scenarioTitle": "The Moon Landing"
+    },
+    {
+      "name": "Dr. Li Wenliang",
+      "personaId": "kn7e07c8qa8cacfvk5y3s4kyyx85ba01",
+      "scenarioTitle": "COVID-19: The World Holds Its Breath"
+    },
+    {
+      "name": "Maria",
+      "personaId": "kn79nm71x6wfbgvw6e8r1p1ceh85av0m",
+      "scenarioTitle": "COVID-19: The World Holds Its Breath"
+    },
+    {
+      "name": "Dr. Anthony Fauci",
+      "personaId": "kn7aj4j9a2ammjjccecb9k491x85av2r",
+      "scenarioTitle": "COVID-19: The World Holds Its Breath"
+    },
+    {
+      "name": "Aisha Patel",
+      "personaId": "kn7bjvx2q6krb2p0nedw5k082x85az5g",
+      "scenarioTitle": "COVID-19: The World Holds Its Breath"
+    },
+    {
+      "name": "Jens",
+      "personaId": "kn7bq0gbewdxtc8trcv2tzf0f985b3xp",
+      "scenarioTitle": "COVID-19: The World Holds Its Breath"
+    },
+    {
+      "name": "Priya Sharma",
+      "personaId": "kn78fcde6j3zw3c5r9ackf5ed985ax25",
+      "scenarioTitle": "COVID-19: The World Holds Its Breath"
+    },
+    {
+      "name": "Dr. Philip Zimbardo",
+      "personaId": "kn7bbm5zvmydn3ezqab2csva1985b13p",
+      "scenarioTitle": "The Stanford Prison Experiment"
+    },
+    {
+      "name": "Clay (Prisoner #416)",
+      "personaId": "kn758fpg395x7payfmcetmnn5585a4s5",
+      "scenarioTitle": "The Stanford Prison Experiment"
+    },
+    {
+      "name": "Dave Eshelman",
+      "personaId": "kn7c7ehec6xmtrdp3413wsdas585bv1x",
+      "scenarioTitle": "The Stanford Prison Experiment"
+    },
+    {
+      "name": "Christina Maslach",
+      "personaId": "kn76txyj9bazq7za6zrp1192fx85b5wp",
+      "scenarioTitle": "The Stanford Prison Experiment"
+    },
+    {
+      "name": "Douglas Korpi",
+      "personaId": "kn7admshnrwfjdbcfybk58gztd85b5g3",
+      "scenarioTitle": "The Stanford Prison Experiment"
+    },
+    {
+      "name": "Carlo Prescott",
+      "personaId": "kn7a6y0h8nk75z53pp31d06zdh85b51b",
+      "scenarioTitle": "The Stanford Prison Experiment"
+    },
+    {
+      "name": "Champa Devi Shukla",
+      "personaId": "kn766ghsz5bzmkjs9ysvpmbme985amvq",
+      "scenarioTitle": "The Bhopal Gas Tragedy"
+    },
+    {
+      "name": "Warren Anderson",
+      "personaId": "kn78yv1zth02p1n0x4d1ncppxd85afw9",
+      "scenarioTitle": "The Bhopal Gas Tragedy"
+    },
+    {
+      "name": "Dr. Heeresh Chandra",
+      "personaId": "kn700nbnd8aa48k57wn55bf7z185aj56",
+      "scenarioTitle": "The Bhopal Gas Tragedy"
+    },
+    {
+      "name": "Rashida Bee",
+      "personaId": "kn77cqsd3jpqyavx13r2ak13zh85a2je",
+      "scenarioTitle": "The Bhopal Gas Tragedy"
+    },
+    {
+      "name": "T.R. Chouhan",
+      "personaId": "kn703df3tscbh1q7tczqnhqhss85b3dw",
+      "scenarioTitle": "The Bhopal Gas Tragedy"
+    },
+    {
+      "name": "Indira Gandhi",
+      "personaId": "kn785gfs0vrwbrxsmbv4qxn6w185b0sw",
+      "scenarioTitle": "The Bhopal Gas Tragedy"
+    },
+    {
+      "name": "Maya",
+      "personaId": "kn77ah8j5ygc79sbprg8r8gknh85a0x3",
+      "scenarioTitle": "Operation Neptune Spear: The Hunt for Bin Laden"
+    },
+    {
+      "name": "General Ashfaq Parvez Kayani",
+      "personaId": "kn70vbah27agm1qczfghwbz7p585afna",
+      "scenarioTitle": "Operation Neptune Spear: The Hunt for Bin Laden"
+    },
+    {
+      "name": "Noor Khan",
+      "personaId": "kn7bhvg054t7p6aft03w9cr50585bjgd",
+      "scenarioTitle": "Operation Neptune Spear: The Hunt for Bin Laden"
+    },
+    {
+      "name": "Robert O'Neill",
+      "personaId": "kn73tcnbe95f4ff8kwvm8ne6ex85aade",
+      "scenarioTitle": "Operation Neptune Spear: The Hunt for Bin Laden"
+    },
+    {
+      "name": "Fatima",
+      "personaId": "kn75m4fgk8dh7z8pz3vc4n1da985ajef",
+      "scenarioTitle": "Operation Neptune Spear: The Hunt for Bin Laden"
+    },
+    {
+      "name": "Noam Chomsky",
+      "personaId": "kn78pw3k72chzny5m0egzpqex185a1ht",
+      "scenarioTitle": "Operation Neptune Spear: The Hunt for Bin Laden"
+    },
+    {
+      "name": "Captain Vikram Batra",
+      "personaId": "kn79f28gm420g77j3qs00ghyss85bp05",
+      "scenarioTitle": "The Kargil War"
+    },
+    {
+      "name": "Captain Karnal Sher Khan",
+      "personaId": "kn70aetpehe1kf4wcxywaeqs8s85b2et",
+      "scenarioTitle": "The Kargil War"
+    },
+    {
+      "name": "Dimple Cheema",
+      "personaId": "kn7fx01r5py0xy4sgxqr7p7y6185akbm",
+      "scenarioTitle": "The Kargil War"
+    },
+    {
+      "name": "General Pervez Musharraf",
+      "personaId": "kn77fzsfcqzygzwx7qmhnbxk1185ahyt",
+      "scenarioTitle": "The Kargil War"
+    },
+    {
+      "name": "Nawaz Sharif",
+      "personaId": "kn7cyn7t3pmqqtecyzxm90az2n85bkgp",
+      "scenarioTitle": "The Kargil War"
+    },
+    {
+      "name": "Zubeida",
+      "personaId": "kn75m89wxr7vm9rcfzmvre16as85a29f",
+      "scenarioTitle": "The Kargil War"
+    },
+    {
+      "name": "Vasily Ignatenko",
+      "personaId": "kn76qvj7jx0e0rdt5cvr924zxd85byh6",
+      "scenarioTitle": "Chernobyl: The Invisible Fire"
+    },
+    {
+      "name": "Lyudmila Ignatenko",
+      "personaId": "kn7972qhp98yzyd9e5xhrg2avs85b8qp",
+      "scenarioTitle": "Chernobyl: The Invisible Fire"
+    },
+    {
+      "name": "Valery Legasov",
+      "personaId": "kn75z2411123mehzrsgpm6m54s85ak8f",
+      "scenarioTitle": "Chernobyl: The Invisible Fire"
+    },
+    {
+      "name": "Anatoly Dyatlov",
+      "personaId": "kn74s0m36efcr7xfns5gktps2d85a95q",
+      "scenarioTitle": "Chernobyl: The Invisible Fire"
+    },
+    {
+      "name": "Mikhail Gorbachev",
+      "personaId": "kn719bs8xq5pkj2kfp1ckt0hys85avm3",
+      "scenarioTitle": "Chernobyl: The Invisible Fire"
+    },
+    {
+      "name": "Svetlana Alexievich",
+      "personaId": "kn73dycz7ba09930jy4gsvz8z985awd4",
+      "scenarioTitle": "Chernobyl: The Invisible Fire"
+    },
+    {
+      "name": "Marcus Brutus",
+      "personaId": "kn7cjf6d9tjr2906t4axg2psas85bxrn",
+      "scenarioTitle": "The Assassination of Julius Caesar"
+    },
+    {
+      "name": "Mark Antony",
+      "personaId": "kn70t52tsa17nfb0de6gwgs14d85aysj",
+      "scenarioTitle": "The Assassination of Julius Caesar"
+    },
+    {
+      "name": "Calpurnia",
+      "personaId": "kn75zedm6zz3sck1yqfxmke25h85bjat",
+      "scenarioTitle": "The Assassination of Julius Caesar"
+    },
+    {
+      "name": "Gaius Cassius Longinus",
+      "personaId": "kn76dbnpj1z1nb867a2yjv6z0185aa42",
+      "scenarioTitle": "The Assassination of Julius Caesar"
+    },
+    {
+      "name": "Cleopatra VII",
+      "personaId": "kn7bdhfyn1anad99n9pk1v2xzn85ahgw",
+      "scenarioTitle": "The Assassination of Julius Caesar"
+    },
+    {
+      "name": "Gaius Octavian",
+      "personaId": "kn7ctp4yrmca75denwm4dd3rp585a446",
+      "scenarioTitle": "The Assassination of Julius Caesar"
+    },
+    {
+      "name": "Maximilien Robespierre",
+      "personaId": "kn73h5cvnztg0hp83txa7pzdh985axvp",
+      "scenarioTitle": "The French Revolution: Liberty, Equality, Terror"
+    },
+    {
+      "name": "Marie Antoinette",
+      "personaId": "kn70111wf64ye4rpzg8k731bp585a2hq",
+      "scenarioTitle": "The French Revolution: Liberty, Equality, Terror"
+    },
+    {
+      "name": "Olympe de Gouges",
+      "personaId": "kn7dq8113pt6ftbsdbsy0fk6r585at02",
+      "scenarioTitle": "The French Revolution: Liberty, Equality, Terror"
+    },
+    {
+      "name": "Toussaint Louverture",
+      "personaId": "kn74e43kkajxhb2zh1a8rrh37s85b9y0",
+      "scenarioTitle": "The French Revolution: Liberty, Equality, Terror"
+    },
+    {
+      "name": "Georges Danton",
+      "personaId": "kn7fgwe5wjhfvtxafpmr87x78x85b3fg",
+      "scenarioTitle": "The French Revolution: Liberty, Equality, Terror"
+    },
+    {
+      "name": "Jeanne",
+      "personaId": "kn7evr01rffvf7h3rbvmtn9c3h85a6rp",
+      "scenarioTitle": "The French Revolution: Liberty, Equality, Terror"
+    },
+    {
+      "name": "Dr. Victor Vaughan",
+      "personaId": "kn79qj0rgsn2sfp6etm40dkpsd85b000",
+      "scenarioTitle": "The Spanish Flu: The Forgotten Pandemic"
+    },
+    {
+      "name": "Lutiant Van Wert",
+      "personaId": "kn7dzvaq96x32mnvfhzwdh6erx85a3kf",
+      "scenarioTitle": "The Spanish Flu: The Forgotten Pandemic"
+    },
+    {
+      "name": "Mohandas Gandhi",
+      "personaId": "kn7ayayemqchvxq3sv78rcc0td85ap0h",
+      "scenarioTitle": "The Spanish Flu: The Forgotten Pandemic"
+    },
+    {
+      "name": "Laura Spinney",
+      "personaId": "kn796ex109a8qnq817r5rsn0ax85am5a",
+      "scenarioTitle": "The Spanish Flu: The Forgotten Pandemic"
+    },
+    {
+      "name": "Wilfred Owen",
+      "personaId": "kn72a8731qx8sdqfn41yyngnfs85ax12",
+      "scenarioTitle": "The Spanish Flu: The Forgotten Pandemic"
+    },
+    {
+      "name": "Fumiko Hayashi",
+      "personaId": "kn743x1g4dv2hftv7p3vmsk5yn85a3hz",
+      "scenarioTitle": "The Spanish Flu: The Forgotten Pandemic"
+    }
+  ],
+  "pendingBanners": [
+    {
+      "scenarioId": "kx75k3dhpm88ad773pqz3hxx5985byad",
+      "title": "World War II: The Fall of Berlin"
+    },
+    {
+      "scenarioId": "kx78tx52srmt9b35kvyn39bpvs85bhq8",
+      "title": "The Partition of India"
+    },
+    {
+      "scenarioId": "kx7cdmv0fs349ecntr2t46sv1x85bgwy",
+      "title": "The Sinking of the Titanic"
+    },
+    {
+      "scenarioId": "kx7dh8djs73chn5k87d8j81e6985bfy6",
+      "title": "Hiroshima: The Atomic Dawn"
+    },
+    {
+      "scenarioId": "kx78daqbgqjeye3k1zzn98180585bpwy",
+      "title": "Jack the Ripper: The Whitechapel Murders"
+    },
+    {
+      "scenarioId": "kx793br5t1xqap2cm0hbk9tcax85a00v",
+      "title": "The Moon Landing"
+    },
+    {
+      "scenarioId": "kx72a3rbfpzqn3dtbb423m2bxh85a661",
+      "title": "COVID-19: The World Holds Its Breath"
+    },
+    {
+      "scenarioId": "kx7agnp4n319b2pedttz0egpfs85b31k",
+      "title": "The Stanford Prison Experiment"
+    },
+    {
+      "scenarioId": "kx77wz0tn68777mdhanetkfrhn85aw6m",
+      "title": "The Bhopal Gas Tragedy"
+    },
+    {
+      "scenarioId": "kx797z4s6770gr7mgs9yf1kp8s85a5wv",
+      "title": "Operation Neptune Spear: The Hunt for Bin Laden"
+    },
+    {
+      "scenarioId": "kx76z91n81kpb24n9wynkjc88x85b06p",
+      "title": "The Kargil War"
+    },
+    {
+      "scenarioId": "kx7bf8g4m1vrbxpmj6nvr6w9ed85as4k",
+      "title": "Chernobyl: The Invisible Fire"
+    },
+    {
+      "scenarioId": "kx7d658817q310dey1h4gy93kd85bacs",
+      "title": "The Assassination of Julius Caesar"
+    },
+    {
+      "scenarioId": "kx725gb6kzz447nctxqj8a0c6x85apck",
+      "title": "The French Revolution: Liberty, Equality, Terror"
+    },
+    {
+      "scenarioId": "kx733bnp6t801ffkq4cyve8rmx85bn79",
+      "title": "The Spanish Flu: The Forgotten Pandemic"
+    }
+  ]
+}

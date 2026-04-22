@@ -3,15 +3,112 @@
 import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 
-/**
- * Core avatar generation logic — shared between initial generation and retries.
- */
-async function runAvatarGeneration(
-  personaId: string,
-  runpodEndpointUrl: string,
-  geminiModelId: string,
-  runpodApiKey: string,
+const RUNPOD_ENDPOINT = "https://api.runpod.ai/v2/wan-2-6-t2i";
+
+interface RunPodSubmitResponse {
+  id: string;
+  status: string;
+}
+
+interface RunPodStatusResponse {
+  id: string;
+  status: "IN_QUEUE" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+  output?: {
+    image_url?: string;
+    images?: string[];
+  };
+  error?: string;
+}
+
+async function submitImageJob(
+  prompt: string,
+  apiKey: string,
+  size: string = "1024*1024"
+): Promise<string> {
+  const response = await fetch(`${RUNPOD_ENDPOINT}/run`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      input: {
+        prompt,
+        size,
+        seed: -1,
+        enable_safety_checker: true,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`RunPod job submission failed: ${response.status} - ${errorText}`);
+  }
+
+  const data = (await response.json()) as RunPodSubmitResponse;
+  if (!data.id) {
+    throw new Error("RunPod did not return a job ID");
+  }
+
+  return data.id;
+}
+
+async function pollForCompletion(
+  jobId: string,
+  apiKey: string,
+  maxAttempts: number = 60,
+  intervalMs: number = 5000
+): Promise<string> {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+
+    const response = await fetch(`${RUNPOD_ENDPOINT}/status/${jobId}`, {
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`RunPod status check failed: ${response.status}`);
+    }
+
+    const data = (await response.json()) as RunPodStatusResponse;
+
+    if (data.status === "COMPLETED") {
+      const imageUrl = data.output?.image_url || data.output?.images?.[0];
+      if (!imageUrl) {
+        throw new Error("RunPod completed but did not return image URL");
+      }
+      return imageUrl;
+    }
+
+    if (data.status === "FAILED" || data.status === "CANCELLED") {
+      throw new Error(`RunPod job ${data.status}: ${data.error ?? "unknown error"}`);
+    }
+  }
+
+  throw new Error("RunPod job timed out after polling");
+}
+
+async function downloadAndUploadToStorage(
+  ctx: { storage: { store: (blob: Blob) => Promise<Id<"_storage">> } },
+  imageUrl: string
+): Promise<Id<"_storage">> {
+  const response = await fetch(imageUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to download image: ${response.status}`);
+  }
+
+  const blob = await response.blob();
+  const storageId = await ctx.storage.store(blob);
+
+  return storageId;
+}
+
+function buildProfilePrompt(
   persona: {
     name: string;
     historicalRole: string;
@@ -20,108 +117,22 @@ async function runAvatarGeneration(
     estimatedAge: number;
     gender: string;
   },
-  scenarioEra: string
-): Promise<{ profileImageUrl: string; portraitImageUrl: string }> {
-  const physicalDescription = `${persona.gender}, approximately ${persona.estimatedAge} years old, from ${persona.geographicOrigin}`;
-  const personalityTraits = persona.personalityTraits.slice(0, 3).join(", ");
+  era: string
+): string {
+  const traits = persona.personalityTraits.slice(0, 3).join(", ");
+  const baseDescription = `${persona.gender}, approximately ${persona.estimatedAge} years old, from ${persona.geographicOrigin}`;
 
-  // Submit job to RunPod (Requirement 22.1)
-  const submitResponse = await fetch(`${runpodEndpointUrl}/run`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${runpodApiKey}`,
-    },
-    body: JSON.stringify({
-      input: {
-        model: geminiModelId,
-        prompts: {
-          profile: `Animated profile portrait of ${persona.name}, ${persona.historicalRole}, ${scenarioEra} era, ${physicalDescription}, painterly style, circular crop`,
-          portrait: `Full portrait of ${persona.name}, ${persona.historicalRole}, ${scenarioEra} era, ${physicalDescription}, historical oil painting style`,
-        },
-        personality: personalityTraits,
-      },
-    }),
-  });
-
-  if (!submitResponse.ok) {
-    throw new Error(`RunPod job submission failed: ${submitResponse.status}`);
-  }
-
-  const submitData = await submitResponse.json() as { id: string; status: string };
-  const jobId = submitData.id;
-
-  if (!jobId) {
-    throw new Error("RunPod did not return a job ID");
-  }
-
-  // Poll for completion (Requirement 22.2)
-  const maxPollingAttempts = 60; // 60 attempts × 5 seconds = 5 minutes max
-  const pollingIntervalMs = 5000;
-
-  for (let attempt = 0; attempt < maxPollingAttempts; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, pollingIntervalMs));
-
-    const statusResponse = await fetch(`${runpodEndpointUrl}/status/${jobId}`, {
-      headers: {
-        "Authorization": `Bearer ${runpodApiKey}`,
-      },
-    });
-
-    if (!statusResponse.ok) {
-      throw new Error(`RunPod status check failed: ${statusResponse.status}`);
-    }
-
-    const statusData = await statusResponse.json() as {
-      status: string;
-      output?: {
-        profileImageUrl?: string;
-        portraitImageUrl?: string;
-      };
-      error?: string;
-    };
-
-    if (statusData.status === "COMPLETED") {
-      const profileImageUrl = statusData.output?.profileImageUrl;
-      const portraitImageUrl = statusData.output?.portraitImageUrl;
-
-      if (!profileImageUrl || !portraitImageUrl) {
-        throw new Error("RunPod completed but did not return image URLs");
-      }
-
-      return { profileImageUrl, portraitImageUrl };
-    }
-
-    if (statusData.status === "FAILED" || statusData.status === "CANCELLED") {
-      throw new Error(`RunPod job ${statusData.status}: ${statusData.error ?? "unknown error"}`);
-    }
-
-    // Continue polling for IN_QUEUE, IN_PROGRESS statuses
-  }
-
-  throw new Error("RunPod job timed out after polling");
+  return `Portrait of ${persona.name}, a ${persona.historicalRole} from the ${era} era. ${baseDescription}. Expression reflecting personality: ${traits}. Historical portrait style, warm studio lighting, detailed face, period-appropriate attire, painterly digital art. Negative prompt: blurry, low-res, watermark, text, logo, distorted features, extra limbs, modern clothing, anachronistic elements`;
 }
 
-/**
- * generateAvatars Convex action.
- *
- * Calls RunPod/Gemini endpoint to generate profile and portrait images for a persona.
- * Polls until completion, stores URLs, and schedules retries on failure.
- *
- * Requirements: 22.1, 22.2, 22.3, 22.5, 22.6
- */
 export const generateAvatars = action({
   args: {
     personaId: v.id("personas"),
   },
   handler: async (ctx, args): Promise<{ success: boolean; error?: string }> => {
-    // Read endpoint URL and model ID from environment variables (Requirement 22.6)
-    const runpodEndpointUrl = process.env.RUNPOD_ENDPOINT_URL;
-    const geminiModelId = process.env.GEMINI_MODEL_ID;
     const runpodApiKey = process.env.RUNPOD_API_KEY;
 
-    if (!runpodEndpointUrl || !geminiModelId) {
-      // Mark as failed and schedule retry
+    if (!runpodApiKey) {
       await ctx.runMutation(internal.avatarMutations.updatePersonaAvatarStatus, {
         personaId: args.personaId,
         avatarGenerationStatus: "failed",
@@ -130,10 +141,9 @@ export const generateAvatars = action({
         personaId: args.personaId,
         attemptNumber: 0,
       });
-      return { success: false, error: "RunPod endpoint or Gemini model ID not configured." };
+      return { success: false, error: "RunPod API key not configured." };
     }
 
-    // Load persona data
     const persona = await ctx.runQuery(api.scenarios.getPersonaById, {
       personaId: args.personaId,
     });
@@ -142,7 +152,6 @@ export const generateAvatars = action({
       return { success: false, error: "Persona not found." };
     }
 
-    // Load scenario for era information
     const scenario = await ctx.runQuery(api.scenarios.getScenarioById, {
       scenarioId: persona.scenarioId,
     });
@@ -150,11 +159,7 @@ export const generateAvatars = action({
     const era = scenario?.era ?? "Contemporary";
 
     try {
-      const { profileImageUrl, portraitImageUrl } = await runAvatarGeneration(
-        args.personaId,
-        runpodEndpointUrl,
-        geminiModelId,
-        runpodApiKey ?? "",
+      const profilePrompt = buildProfilePrompt(
         {
           name: persona.name,
           historicalRole: persona.historicalRole,
@@ -166,17 +171,25 @@ export const generateAvatars = action({
         era
       );
 
-      // Store image URLs (Requirement 22.3)
+      // Submit job and poll for completion
+      const jobId = await submitImageJob(profilePrompt, runpodApiKey);
+      const imageUrl = await pollForCompletion(jobId, runpodApiKey);
+
+      // Download and upload to Convex storage
+      const storageId = await downloadAndUploadToStorage(ctx, imageUrl);
+
+      // Get the serving URL from Convex storage
+      const profileImageUrl = await ctx.storage.getUrl(storageId);
+
       await ctx.runMutation(internal.avatarMutations.updatePersonaAvatarStatus, {
         personaId: args.personaId,
-        profileImageUrl,
-        portraitImageUrl,
+        profileImageUrl: profileImageUrl ?? imageUrl,
+        profileImageStorageId: storageId,
         avatarGenerationStatus: "complete",
       });
 
       return { success: true };
     } catch (err) {
-      // On failure: set status to "failed", schedule background retry (Requirement 22.5)
       await ctx.runMutation(internal.avatarMutations.updatePersonaAvatarStatus, {
         personaId: args.personaId,
         avatarGenerationStatus: "failed",
@@ -194,27 +207,20 @@ export const generateAvatars = action({
   },
 });
 
-/**
- * Retry avatar generation with exponential backoff.
- * Requirements: 22.5
- */
 export const retryGenerateAvatars = action({
   args: {
     personaId: v.id("personas"),
     attemptNumber: v.number(),
   },
   handler: async (ctx, args): Promise<{ success: boolean; error?: string }> => {
-    const runpodEndpointUrl = process.env.RUNPOD_ENDPOINT_URL;
-    const geminiModelId = process.env.GEMINI_MODEL_ID;
     const runpodApiKey = process.env.RUNPOD_API_KEY;
 
-    if (!runpodEndpointUrl || !geminiModelId) {
-      // Schedule next retry if attempts remain
+    if (!runpodApiKey) {
       await ctx.runMutation(internal.avatarMutations.scheduleAvatarRetry, {
         personaId: args.personaId,
         attemptNumber: args.attemptNumber,
       });
-      return { success: false, error: "RunPod endpoint or Gemini model ID not configured." };
+      return { success: false, error: "RunPod API key not configured." };
     }
 
     const persona = await ctx.runQuery(api.scenarios.getPersonaById, {
@@ -232,11 +238,7 @@ export const retryGenerateAvatars = action({
     const era = scenario?.era ?? "Contemporary";
 
     try {
-      const { profileImageUrl, portraitImageUrl } = await runAvatarGeneration(
-        args.personaId,
-        runpodEndpointUrl,
-        geminiModelId,
-        runpodApiKey ?? "",
+      const profilePrompt = buildProfilePrompt(
         {
           name: persona.name,
           historicalRole: persona.historicalRole,
@@ -248,16 +250,21 @@ export const retryGenerateAvatars = action({
         era
       );
 
+      const jobId = await submitImageJob(profilePrompt, runpodApiKey);
+      const imageUrl = await pollForCompletion(jobId, runpodApiKey);
+
+      const storageId = await downloadAndUploadToStorage(ctx, imageUrl);
+      const profileImageUrl = await ctx.storage.getUrl(storageId);
+
       await ctx.runMutation(internal.avatarMutations.updatePersonaAvatarStatus, {
         personaId: args.personaId,
-        profileImageUrl,
-        portraitImageUrl,
+        profileImageUrl: profileImageUrl ?? imageUrl,
+        profileImageStorageId: storageId,
         avatarGenerationStatus: "complete",
       });
 
       return { success: true };
     } catch (err) {
-      // Schedule next retry
       await ctx.runMutation(internal.avatarMutations.scheduleAvatarRetry, {
         personaId: args.personaId,
         attemptNumber: args.attemptNumber,

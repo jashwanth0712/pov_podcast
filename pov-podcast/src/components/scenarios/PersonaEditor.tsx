@@ -20,7 +20,6 @@ export interface PersonaData {
   gender: string;
   voiceId: string;
   profileImageUrl?: string | null;
-  portraitImageUrl?: string | null;
   avatarGenerationStatus: "pending" | "complete" | "failed";
 }
 
@@ -126,7 +125,7 @@ function PersonaCard({ persona, index, canDelete, onEdit, onDelete }: PersonaCar
 
   return (
     <article
-      className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 flex items-start gap-4"
+      className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 p-5 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow"
       aria-label={`Persona: ${persona.name}`}
     >
       {/* Avatar */}
@@ -137,49 +136,55 @@ function PersonaCard({ persona, index, canDelete, onEdit, onDelete }: PersonaCar
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <div>
-            <h3 className="font-semibold text-zinc-900 dark:text-zinc-50 text-sm">
+          <div className="space-y-0.5">
+            <h3 className="font-semibold text-zinc-900 dark:text-zinc-50 text-sm leading-tight">
               {persona.name}
             </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               {persona.historicalRole}
             </p>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Actions - Icon-based ghost buttons */}
+          <div className="flex items-center gap-1 flex-shrink-0">
             <button
               onClick={() => onEdit(persona)}
-              className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+              className="p-2 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors"
               aria-label={`Edit ${persona.name}`}
+              title="Edit"
             >
-              Edit
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
             </button>
             {canDelete && !showDeleteConfirm && (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="text-xs font-medium text-red-500 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded"
+                className="p-2 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-950/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors"
                 aria-label={`Delete ${persona.name}`}
+                title="Delete"
               >
-                ✕
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             )}
             {showDeleteConfirm && (
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-zinc-500">Delete?</span>
+              <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800 rounded-lg px-2 py-1">
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">Delete?</span>
                 <button
                   onClick={() => {
                     onDelete(persona._id);
                     setShowDeleteConfirm(false);
                   }}
-                  className="text-xs font-medium text-red-600 hover:underline"
+                  className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline px-1"
                   aria-label={`Confirm delete ${persona.name}`}
                 >
                   Yes
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="text-xs font-medium text-zinc-500 hover:underline"
+                  className="text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:underline px-1"
                   aria-label="Cancel delete"
                 >
                   No
@@ -190,7 +195,7 @@ function PersonaCard({ persona, index, canDelete, onEdit, onDelete }: PersonaCar
         </div>
 
         {personalitySummary && (
-          <p className="mt-1.5 text-xs text-zinc-600 dark:text-zinc-300 italic line-clamp-2">
+          <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-300 italic line-clamp-2">
             &ldquo;{personalitySummary}&rdquo;
           </p>
         )}
@@ -444,7 +449,7 @@ export function PersonaEditor({
       )}
 
       {/* Persona list */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         {personas.map((persona, index) =>
           editingPersonaId === persona._id ? (
             <PersonaEditForm
