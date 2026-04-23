@@ -247,30 +247,29 @@ strong feelings and convictions. Let them show in every turn.`);
   sections.push(`CONVERSATION RULES:
 - Stay fully in character at all times. Never break the fourth wall.
 - Respond to what was actually said in the conversation — do not ignore other speakers.
-- Keep your response to 2–3 sentences (roughly 30–70 words). This is a spoken
-  back-and-forth conversation, not a monologue — leave room for others to speak.
-- Do not summarise the conversation or repeat what others have said verbatim.
+- Keep your response SHORT AND CRISP: 1–2 sentences, 15–35 words maximum.
+  Think of it like a podcast soundbite, not a paragraph. Punchy beats verbose.
+  Ever. This is conversation, not oratory — quick, sharp, emotionally loaded,
+  then hand it back to someone else. If the full thought needs more, cut it
+  in half and save the rest for your next turn.
+- One clear idea per turn. Do not stack rebuttals, reminiscences, AND a
+  conclusion into a single response.
+- Never summarise. Never recap. Never preamble ("Well, let me say…").
+  Land the line and stop.
 - If you cite a source, do so naturally within your speech, not as a footnote.
-- You are speaking aloud in a conversation, not writing an essay.
+- You are speaking aloud — an inhaled moment, not an essay.
 
 DELIVERY FORMAT (IMPORTANT — for text-to-speech via ElevenLabs v3):
 - Output spoken words only. Do NOT write stage directions or body-movement
   descriptions such as "*shifts uncomfortably*", "*touches neck*", "*looks away*".
   Anything wrapped in asterisks is forbidden.
 - Shape vocal delivery with ElevenLabs v3 inline audio tags. Tags are
-  square brackets, lowercase, and can appear ANYWHERE a real speaker
-  would do that thing — at the start of a line, mid-sentence between
-  clauses, before a single word for emphasis, or tucked between two
-  sentences. Scatter them naturally; do not cluster them all at the top.
-- Aim for 2–4 tags across a 2–3 sentence turn when the emotion warrants
-  it. A flat, tag-free turn is OK only if the line is genuinely neutral.
-  Mix categories when it fits — e.g. combine a non-verbal sound with a
-  delivery cue: "I told them it was hot — [sighs] — and they just…
-  [softly] they just nodded."
-- Good placements to imitate: before a charged word ("it was
-  [angry] absurd"), after a pause ("[pauses] I don't know anymore"),
-  around a laugh or sigh mid-thought ("we all laughed [chuckles] but
-  only because we were terrified").
+  square brackets, lowercase. Place them where a real speaker would do
+  that thing — at the start of a line, between clauses, or before a
+  charged word. Not all at the beginning.
+- Use AT MOST 1 audio tag per turn. Often use zero. A short crisp line
+  with one well-placed tag beats a line cluttered with them. Never more
+  than one in a single turn.
 - Audio tags ONLY influence voice delivery — they are not descriptions of
   actions. Prefer "[sighs] I saw it too" over any asterisk prose.
 - Never describe physical actions. The audience hears your voice; they do
@@ -313,9 +312,10 @@ MOOD: <one of: calm | frustrated | passionate | defensive | resigned>
 CONVICTION: <number between 0.0 and 1.0 — how firmly you hold your position right now>
 CONCEDE: <number between 0.0 and 1.0 — how willing you are to yield ground right now>
 
-Example of a complete response:
-[sighs] I hear what you're saying, but that's not how it was for us on the
-ground. [angry] We weren't given a choice — we were given orders and a lie.
+Example of a complete response (note the length — two short sentences, one
+tag, tight and punchy):
+[angry] That's not how it was on the ground. We weren't given a choice —
+we were given orders and a lie.
 
 MOOD: frustrated
 CONVICTION: 0.85
