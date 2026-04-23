@@ -310,6 +310,20 @@ Rules:
       scenarioId: result.scenarioId,
     });
 
+    // Trigger ambient background music generation for the scenario
+    await ctx.scheduler.runAfter(0, api.generateBackgroundMusic.generateBackgroundMusic, {
+      scenarioId: result.scenarioId,
+    });
+
+    // Trigger ambient character SFX generation for each persona
+    for (const personaId of result.personaIds) {
+      await ctx.scheduler.runAfter(
+        0,
+        api.generateCharacterSoundEffect.generateCharacterSoundEffect,
+        { personaId }
+      );
+    }
+
     return { success: true, scenarioId: result.scenarioId };
   },
 });

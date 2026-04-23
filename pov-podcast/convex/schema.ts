@@ -28,6 +28,15 @@ export default defineSchema({
       v.literal("complete"),
       v.literal("failed")
     )),
+    musicStorageId: v.optional(v.id("_storage")),
+    musicGeneratedAt: v.optional(v.number()),
+    musicMoodLabel: v.optional(v.string()),
+    musicGenerationStatus: v.optional(v.union(
+      v.literal("pending"),
+      v.literal("complete"),
+      v.literal("failed")
+    )),
+    musicGenerationPrompt: v.optional(v.string()),
   }).index("by_era", ["era"]).index("by_createdBy", ["createdBy"]),
 
   personas: defineTable({
@@ -58,6 +67,14 @@ export default defineSchema({
       v.literal("complete"),
       v.literal("failed")
     ),
+    sfxStorageId: v.optional(v.id("_storage")),
+    sfxGeneratedAt: v.optional(v.number()),
+    sfxGenerationStatus: v.optional(v.union(
+      v.literal("pending"),
+      v.literal("complete"),
+      v.literal("failed")
+    )),
+    sfxGenerationPrompt: v.optional(v.string()),
   }).index("by_scenarioId", ["scenarioId"]),
 
   personaRelationships: defineTable({
@@ -210,6 +227,9 @@ export default defineSchema({
       v.literal("Scholar")
     ),
     updatedAt: v.number(),
+    ambientMusicVolume: v.optional(v.number()),
+    ambientSfxVolume: v.optional(v.number()),
+    ambientMuted: v.optional(v.boolean()),
   }).index("by_userId", ["userId"]),
 
   // Account deletion scheduling

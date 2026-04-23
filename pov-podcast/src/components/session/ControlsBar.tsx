@@ -4,7 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { SessionSettingsSheet } from "./SessionSettingsSheet";
+import { SessionSettingsSheet, type AmbientControlsState } from "./SessionSettingsSheet";
 import { ParticipantsSheet } from "./ParticipantsSheet";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -25,6 +25,8 @@ interface ControlsBarProps {
   captionsEnabled?: boolean;
   /** Toggle live captions on/off. */
   onCaptionsToggle?: () => void;
+  /** Ambient audio controls bundle (music/sfx volume, mute). */
+  ambientControls?: AmbientControlsState;
 }
 
 // ─── MicIcon ──────────────────────────────────────────────────────────────────
@@ -170,6 +172,7 @@ export function ControlsBar({
   transcriptToggleRef,
   captionsEnabled = false,
   onCaptionsToggle,
+  ambientControls,
 }: ControlsBarProps) {
   const [participantsOpen, setParticipantsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -391,6 +394,7 @@ export function ControlsBar({
         sessionId={sessionId}
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+        ambientControls={ambientControls}
       />
     </>
   );

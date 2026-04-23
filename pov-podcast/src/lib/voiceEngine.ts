@@ -250,6 +250,15 @@ export class VoiceEngine {
 
   // ── AudioContext lifecycle ─────────────────────────────────────────────────
 
+  /**
+   * Returns the shared AudioContext. Exposed so other audio engines
+   * (e.g. AmbientEngine) can share the same context rather than creating
+   * a second one.
+   */
+  ensureAudioContext(): AudioContext {
+    return this.getAudioContext();
+  }
+
   private getAudioContext(): AudioContext {
     if (!this.audioContext || this.audioContext.state === "closed") {
       this.audioContext = new AudioContext();

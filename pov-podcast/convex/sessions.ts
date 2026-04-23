@@ -366,6 +366,54 @@ export const updateUserDefaultDepthLevel = mutation({
 });
 
 /**
+ * Persists the user's ambient audio preferences (music/sfx volume, mute).
+ * Requirements: 3.7
+ */
+export const updateAmbientPreferences = mutation({
+  args: {
+    ambientMusicVolume: v.optional(v.number()),
+    ambientSfxVolume: v.optional(v.number()),
+    ambientMuted: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated.");
+
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first();
+
+    const patch: Record<string, unknown> = { updatedAt: now };
+    if (args.ambientMusicVolume !== undefined) {
+      patch.ambientMusicVolume = args.ambientMusicVolume;
+    }
+    if (args.ambientSfxVolume !== undefined) {
+      patch.ambientSfxVolume = args.ambientSfxVolume;
+    }
+    if (args.ambientMuted !== undefined) {
+      patch.ambientMuted = args.ambientMuted;
+    }
+
+    if (existing) {
+      await ctx.db.patch(existing._id, patch);
+    } else {
+      await ctx.db.insert("userPreferences", {
+        userId,
+        defaultDepthLevel: "Intermediate",
+        updatedAt: now,
+        ambientMusicVolume: args.ambientMusicVolume,
+        ambientSfxVolume: args.ambientSfxVolume,
+        ambientMuted: args.ambientMuted,
+      });
+    }
+
+    return { success: true };
+  },
+});
+
+/**
  * Switches the turn-taking mode for an active session.
  * Requirements: 14.5, 14.6
  */

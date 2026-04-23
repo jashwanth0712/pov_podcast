@@ -16,6 +16,14 @@ import {
   mapEmotionalStateToVoiceParams,
   stripStageDirections,
 } from "../../lib/voiceEngine";
+import { AmbientEngine } from "../../lib/ambientEngine";
+import {
+  computeDominantMood,
+  detectEmotionalToneShift,
+  canTriggerToneShift,
+  type Mood as AmbientMood,
+} from "../../../convex/lib/ambientAudioCache";
+import type { AmbientControlsState } from "./SessionSettingsSheet";
 
 // Default ElevenLabs voice id for moderator turns (Rachel — widely available).
 const MODERATOR_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
@@ -869,6 +877,231 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
     };
   }, []);
 
+  // ── Ambient audio wiring ───────────────────────────────────────────────────
+  const ambientEngineRef = useRef<AmbientEngine | null>(null);
+  const [ambientLoaded, setAmbientLoaded] = useState(false);
+  const [ambientMusicVolume, setAmbientMusicVolume] = useState(0);
+  const [ambientSfxVolume, setAmbientSfxVolume] = useState(0);
+  const [ambientMuted, setAmbientMuted] = useState(true);
+  const prefsAppliedRef = useRef(false);
+
+  const personaIdsForAmbient = useMemo(
+    () => (personas ?? []).map((p) => p._id),
+    [personas]
+  );
+
+  const ambientUrls = useQuery(
+    api.ambientAudioQueries.getAmbientAudioUrls,
+    scenarioId && personaIdsForAmbient.length > 0
+      ? { scenarioId, personaIds: personaIdsForAmbient }
+      : "skip"
+  );
+
+  const userPreferences = useQuery(api.sessions.getUserPreferences);
+  const updateAmbientPreferences = useMutation(
+    api.sessions.updateAmbientPreferences
+  );
+  const generateBackgroundMusicAction = useAction(
+    api.generateBackgroundMusic.generateBackgroundMusic
+  );
+  const ensureAmbientAudioAction = useAction(
+    api.ensureAmbientAudio.ensureAmbientAudio
+  );
+
+  // Idempotently backfill missing/stale ambient audio whenever the scenario or
+  // persona list appears. Safe to call repeatedly — the generation actions
+  // short-circuit on pending/fresh cache.
+  const ensuredKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!scenarioId || personaIdsForAmbient.length === 0) return;
+    const key = `${scenarioId}:${personaIdsForAmbient.join(",")}`;
+    if (ensuredKeyRef.current === key) return;
+    ensuredKeyRef.current = key;
+    void ensureAmbientAudioAction({
+      scenarioId,
+      personaIds: personaIdsForAmbient,
+    }).catch(() => {
+      // Non-fatal — session continues without ambient audio.
+    });
+  }, [scenarioId, personaIdsForAmbient, ensureAmbientAudioAction]);
+
+  // Lazily instantiate AmbientEngine sharing VoiceEngine's AudioContext.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (ambientEngineRef.current) return;
+    const ve = voiceEngineRef.current;
+    if (!ve) return;
+    const ctx = ve.ensureAudioContext();
+    ambientEngineRef.current = new AmbientEngine(ctx);
+    return () => {
+      ambientEngineRef.current?.dispose();
+      ambientEngineRef.current = null;
+    };
+  }, []);
+
+  // Load ambient audio URLs when available. Crossfades to a new music URL
+  // when the query returns a different musicUrl after a tone shift.
+  // Extract the storage-id portion of the URL as a stable key — Convex
+  // re-emits the same URL on every query refresh, but the underlying storage
+  // ID is the invariant we care about.
+  // Use storage IDs as stable keys — Convex signed URLs change on every query
+  // tick, but the underlying storage ID is invariant.
+  const currentMusicIdRef = useRef<string | null>(null);
+  const loadingMusicIdRef = useRef<string | null>(null);
+  const loadedSfxIdsRef = useRef<Set<string>>(new Set());
+  const musicStorageId = ambientUrls?.musicStorageId ?? null;
+  const musicUrl = ambientUrls?.musicUrl ?? null;
+  const sfxIdsKey = useMemo(
+    () =>
+      ambientUrls
+        ? Object.entries(ambientUrls.sfxStorageIds)
+            .filter(([, id]) => !!id)
+            .map(([pid, id]) => `${pid}:${id}`)
+            .sort()
+            .join("|")
+        : "",
+    [ambientUrls]
+  );
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      console.log("[ambient] effect fired musicStorageId:", musicStorageId);
+    }
+    const engine = ambientEngineRef.current;
+    if (!engine || !ambientUrls) return;
+
+    // Kick off SFX fetches in the background for any NEW storage ids.
+    const newSfxUrls: Record<string, string | null> = {};
+    for (const [pid, sid] of Object.entries(ambientUrls.sfxStorageIds)) {
+      if (!sid) continue;
+      if (loadedSfxIdsRef.current.has(sid)) continue;
+      loadedSfxIdsRef.current.add(sid);
+      newSfxUrls[pid] = ambientUrls.sfxUrls[pid];
+    }
+
+    // Start music fetch/decode if we have a new storage id.
+    if (musicStorageId && musicUrl && loadingMusicIdRef.current !== musicStorageId) {
+      const idSnapshot = musicStorageId;
+      loadingMusicIdRef.current = idSnapshot;
+      void engine
+        .loadAudio({ musicUrl, sfxUrls: newSfxUrls })
+        .then(() => {
+          if (loadingMusicIdRef.current !== idSnapshot) return;
+          if (!ambientLoaded) {
+            setAmbientLoaded(true);
+            currentMusicIdRef.current = idSnapshot;
+            engine.startMusic();
+          } else if (idSnapshot !== currentMusicIdRef.current) {
+            currentMusicIdRef.current = idSnapshot;
+            void engine.crossfadeToNewMusic(musicUrl).catch(() => {});
+          }
+        })
+        .catch((err) => {
+          console.warn("[ambient] loadAudio failed:", err);
+        });
+    } else if (Object.keys(newSfxUrls).length > 0) {
+      // Only new SFX; music already loaded or absent.
+      void engine
+        .loadAudio({ musicUrl: null, sfxUrls: newSfxUrls })
+        .catch(() => {});
+    }
+  }, [musicStorageId, musicUrl, sfxIdsKey, ambientLoaded, ambientUrls]);
+
+  // Pause / resume ambient audio with session status.
+  useEffect(() => {
+    const engine = ambientEngineRef.current;
+    if (!engine) return;
+    if (session?.status === "paused") {
+      void engine.pause();
+    } else if (session?.status === "active") {
+      void engine.resume();
+    }
+  }, [session?.status]);
+
+  // Apply persisted preferences once when they first arrive.
+  useEffect(() => {
+    if (prefsAppliedRef.current) return;
+    if (userPreferences === undefined) return;
+    const engine = ambientEngineRef.current;
+    if (!engine) return;
+    const music = userPreferences?.ambientMusicVolume ?? 0;
+    const sfx = userPreferences?.ambientSfxVolume ?? 0;
+    const muted = userPreferences?.ambientMuted ?? true;
+    setAmbientMusicVolume(music);
+    setAmbientSfxVolume(sfx);
+    setAmbientMuted(muted);
+    engine.setMusicVolume(music);
+    engine.setSfxVolume(sfx);
+    engine.setMuted(muted);
+    prefsAppliedRef.current = true;
+  }, [userPreferences, ambientLoaded]);
+
+  const handleMusicVolumeChange = useCallback(
+    (v: number) => {
+      setAmbientMusicVolume(v);
+      ambientEngineRef.current?.setMusicVolume(v);
+      void updateAmbientPreferences({ ambientMusicVolume: v }).catch(() => {});
+    },
+    [updateAmbientPreferences]
+  );
+  const handleSfxVolumeChange = useCallback(
+    (v: number) => {
+      setAmbientSfxVolume(v);
+      ambientEngineRef.current?.setSfxVolume(v);
+      void updateAmbientPreferences({ ambientSfxVolume: v }).catch(() => {});
+    },
+    [updateAmbientPreferences]
+  );
+  const handleMuteToggle = useCallback(() => {
+    setAmbientMuted((prev) => {
+      const next = !prev;
+      ambientEngineRef.current?.setMuted(next);
+      void updateAmbientPreferences({ ambientMuted: next }).catch(() => {});
+      return next;
+    });
+  }, [updateAmbientPreferences]);
+
+  const ambientStatus = useMemo(
+    () => ({
+      musicUrlPresent: !!ambientUrls?.musicUrl,
+      sfxCount: ambientUrls
+        ? Object.values(ambientUrls.sfxUrls).filter(Boolean).length
+        : 0,
+      musicBufferLoaded: ambientLoaded && !!ambientUrls?.musicUrl,
+      audioContextState:
+        (typeof window !== "undefined" &&
+          voiceEngineRef.current?.ensureAudioContext().state) ||
+        "uninitialised",
+    }),
+    [ambientUrls, ambientLoaded]
+  );
+
+  const ambientControls: AmbientControlsState = useMemo(
+    () => ({
+      musicVolume: ambientMusicVolume,
+      sfxVolume: ambientSfxVolume,
+      isMuted: ambientMuted,
+      onMusicVolumeChange: handleMusicVolumeChange,
+      onSfxVolumeChange: handleSfxVolumeChange,
+      onMuteToggle: handleMuteToggle,
+      status: ambientStatus,
+    }),
+    [
+      ambientMusicVolume,
+      ambientSfxVolume,
+      ambientMuted,
+      handleMusicVolumeChange,
+      handleSfxVolumeChange,
+      handleMuteToggle,
+      ambientStatus,
+    ]
+  );
+
+  // Emotional tone shift detection.
+  const moodHistoryRef = useRef<AmbientMood[]>([]);
+  const lastToneShiftRef = useRef<number | null>(null);
+  const toneShiftInFlightRef = useRef(false);
+
   // Refs for latest subscription data — keeps playback chain from reading
   // stale closures after turns/personas arrive mid-playback.
   const personasRef = useRef(personas);
@@ -1049,6 +1282,10 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
         break;
       }
 
+      const speakerPersonaId = !isModerator
+        ? (next.speakerId as Id<"personas">)
+        : null;
+
       await engine.playTurn(voiceId, voiceParams, spokenText, {
         onPlaybackStarted: () => {
           if (!isModerator) {
@@ -1057,17 +1294,84 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
             setCurrentSpeakingPersonaId(null);
           }
           setCurrentCaption({ speakerName: captionSpeakerName, text: spokenText });
+
+          // Ambient: duck music and start this speaker's SFX.
+          ambientEngineRef.current?.duckMusic();
+          if (speakerPersonaId) {
+            ambientEngineRef.current?.startSfxForPersona(speakerPersonaId);
+          }
         },
         onPlaybackComplete: () => {
           setCurrentSpeakingPersonaId(null);
           setCurrentCaption(null);
+
+          ambientEngineRef.current?.unduckMusic();
+          if (speakerPersonaId) {
+            ambientEngineRef.current?.stopSfxForPersona(speakerPersonaId);
+          }
         },
         onFallbackToTranscript: () => {
           setTtsError("Voice playback failed — continuing as text only.");
           setCurrentSpeakingPersonaId(null);
           setCurrentCaption(null);
+
+          ambientEngineRef.current?.unduckMusic();
+          if (speakerPersonaId) {
+            ambientEngineRef.current?.stopSfxForPersona(speakerPersonaId);
+          }
         },
       });
+
+      // After each persona turn, evaluate emotional tone shift.
+      try {
+        const states = personaStatesRef.current;
+        if (scenarioId && states && states.length > 0) {
+          const moods = states
+            .map(
+              (s: { emotionalState?: { mood: AmbientMood } }) =>
+                s.emotionalState?.mood
+            )
+            .filter((m): m is AmbientMood => Boolean(m));
+          if (moods.length > 0) {
+            const dominant = computeDominantMood(moods);
+            const history = moodHistoryRef.current;
+            history.push(dominant);
+            if (history.length > 20) history.shift();
+            const shifted = detectEmotionalToneShift(
+              history.slice(0, -1),
+              dominant
+            );
+            const now = Date.now();
+            if (
+              shifted &&
+              canTriggerToneShift(lastToneShiftRef.current, now) &&
+              !toneShiftInFlightRef.current
+            ) {
+              toneShiftInFlightRef.current = true;
+              lastToneShiftRef.current = now;
+              void generateBackgroundMusicAction({
+                scenarioId,
+                moodLabel: dominant,
+              })
+                .then((res) => {
+                  if (!res.success) return;
+                  // The getAmbientAudioUrls query will refresh; grab the new URL
+                  // from that cache. For simplicity, rely on its reactivity to
+                  // hand us a fresh URL in ambientUrls; if crossfade is critical
+                  // we accept that next refresh will restart rather than crossfade.
+                })
+                .catch(() => {
+                  // Continue without retry (Req 6.5).
+                })
+                .finally(() => {
+                  toneShiftInFlightRef.current = false;
+                });
+            }
+          }
+        }
+      } catch {
+        // Non-fatal.
+      }
 
       isPlayingRef.current = false;
       // Chain to the next unplayed turn (or request a new one).
@@ -1271,6 +1575,7 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
           transcriptToggleRef={transcriptToggleRef}
           captionsEnabled={captionsEnabled}
           onCaptionsToggle={() => setCaptionsEnabled((prev) => !prev)}
+          ambientControls={ambientControls}
         />
       </div>
 

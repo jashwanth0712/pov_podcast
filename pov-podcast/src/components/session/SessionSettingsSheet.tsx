@@ -6,6 +6,24 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Sheet } from "../../components/ui/Sheet";
 import { ConversationTree } from "./ConversationTree";
+import { AmbientAudioControls } from "./AmbientAudioControls";
+
+// ─── Ambient audio props ──────────────────────────────────────────────────────
+
+export interface AmbientControlsState {
+  musicVolume: number;
+  sfxVolume: number;
+  isMuted: boolean;
+  onMusicVolumeChange: (volume: number) => void;
+  onSfxVolumeChange: (volume: number) => void;
+  onMuteToggle: () => void;
+  status?: {
+    musicUrlPresent: boolean;
+    sfxCount: number;
+    musicBufferLoaded: boolean;
+    audioContextState: string;
+  };
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -13,6 +31,7 @@ interface SessionSettingsSheetProps {
   sessionId: Id<"sessions">;
   open: boolean;
   onClose: () => void;
+  ambientControls?: AmbientControlsState;
 }
 
 type TabId = "settings" | "tree" | "relationships" | "sources";
@@ -67,9 +86,10 @@ function Spinner({ label = "Loading" }: { label?: string }) {
 
 interface SettingsTabProps {
   sessionId: Id<"sessions">;
+  ambientControls?: AmbientControlsState;
 }
 
-function SettingsTab({ sessionId }: SettingsTabProps) {
+function SettingsTab({ sessionId, ambientControls }: SettingsTabProps) {
   const session = useQuery(api.sessions.getSession, { sessionId });
 
   const switchTurnTakingMode = useMutation(api.sessions.switchTurnTakingMode);
@@ -169,6 +189,20 @@ function SettingsTab({ sessionId }: SettingsTabProps) {
 
   return (
     <div className="space-y-6">
+      {/* Ambient audio controls (Req 3.1, 5.1–5.5) — rendered first so users
+          immediately see the music/sfx controls. */}
+      {ambientControls && (
+        <AmbientAudioControls
+          musicVolume={ambientControls.musicVolume}
+          sfxVolume={ambientControls.sfxVolume}
+          isMuted={ambientControls.isMuted}
+          onMusicVolumeChange={ambientControls.onMusicVolumeChange}
+          onSfxVolumeChange={ambientControls.onSfxVolumeChange}
+          onMuteToggle={ambientControls.onMuteToggle}
+          status={ambientControls.status}
+        />
+      )}
+
       {/* Turn-taking mode */}
       <section aria-labelledby="turn-taking-heading">
         <h3
@@ -954,6 +988,7 @@ export function SessionSettingsSheet({
   sessionId,
   open,
   onClose,
+  ambientControls,
 }: SessionSettingsSheetProps) {
   const [activeTab, setActiveTab] = useState<TabId>("settings");
 
@@ -998,7 +1033,9 @@ export function SessionSettingsSheet({
         id={`tabpanel-${activeTab}`}
         aria-labelledby={`tab-${activeTab}`}
       >
-        {activeTab === "settings" && <SettingsTab sessionId={sessionId} />}
+        {activeTab === "settings" && (
+          <SettingsTab sessionId={sessionId} ambientControls={ambientControls} />
+        )}
         {activeTab === "tree" && <ConversationTree sessionId={sessionId} />}
         {activeTab === "relationships" && (
           <RelationshipMapTab sessionId={sessionId} />
