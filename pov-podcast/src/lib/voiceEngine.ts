@@ -51,15 +51,18 @@ export interface VoiceParams {
  * Canonical list of ElevenLabs v3 inline audio tags. Feed this list into any
  * prompt that generates spoken-text turns so the LLM can request vocal cues.
  *
- * Rules for use in turn text:
+ * Rules for use in turn text (per ElevenLabs v3 best practices):
  * - Wrap in square brackets, lowercase: `[whispers]`, `[sighs]`.
- * - Place at the start of the sentence or phrase the cue applies to.
- * - Use sparingly — at most one or two per short turn. Overuse degrades
- *   quality.
- * - Tags ONLY affect delivery; never describe physical actions with them.
+ * - Place where a real speaker would do that thing — start of a phrase,
+ *   between clauses, or before a charged word.
+ * - Tags ONLY affect vocal delivery; never describe physical actions.
  *   Use `[sighs]` instead of `*sighs heavily*`.
+ * - v3 does NOT support SSML `<break>` tags. Use `[long pause]`,
+ *   `[short pause]`, or ellipses (`...`) for pauses.
+ * - The chosen voice and its training samples affect tag effectiveness — a
+ *   meditative voice will not convincingly `[shout]`.
  *
- * Source: ElevenLabs v3 audio-tag reference.
+ * Source: https://elevenlabs.io/docs/overview/capabilities/text-to-speech/best-practices
  */
 export const ELEVENLABS_AUDIO_TAGS = {
   emotions: [
@@ -77,14 +80,23 @@ export const ELEVENLABS_AUDIO_TAGS = {
     "amused",
     "defeated",
     "hopeful",
+    "annoyed",
+    "appalled",
+    "thoughtful",
+    "mischievously",
   ],
   nonVerbal: [
     "laughs",
     "laughs harder",
+    "starts laughing",
+    "wheezing",
     "giggles",
     "chuckles",
+    "stifling laughter",
     "sighs",
     "exhales",
+    "exhales sharply",
+    "inhales deeply",
     "gasps",
     "crying",
     "sobbing",
@@ -92,20 +104,25 @@ export const ELEVENLABS_AUDIO_TAGS = {
     "clears throat",
     "coughs",
     "sniffs",
+    "snorts",
     "groans",
+    "swallows",
+    "gulps",
   ],
   delivery: [
     "whispers",
     "shouts",
     "mumbles",
+    "muttering",
     "stutters",
     "sings",
+    "singing",
     "softly",
     "quietly",
     "loudly",
     "strongly",
   ],
-  pacing: ["pauses", "long pause", "hesitates"],
+  pacing: ["short pause", "long pause", "hesitates"],
 } as const;
 
 export interface PlayTurnCallbacks {
@@ -134,13 +151,29 @@ export function stripStageDirections(text: string): string {
 
 // ─── Emotional state → voice parameter mapping ────────────────────────────────
 
+/**
+ * Eleven v3 stability presets. The v3 slider is conceptually three positions
+ * (the API accepts the underlying float). Per the v3 best-practices guide:
+ * - CREATIVE — most expressive, most responsive to audio tags, prone to drift.
+ * - NATURAL — balanced default; closest to the reference recording.
+ * - ROBUST — highly stable but **less responsive to directional prompts**.
+ *
+ * For an audio-tag-driven podcast we never want ROBUST (it dampens the very
+ * cues the prompt is producing). We map emotional moods onto CREATIVE/NATURAL.
+ */
+export const V3_STABILITY = {
+  creative: 0.0,
+  natural: 0.5,
+  robust: 1.0,
+} as const;
+
 export function mapEmotionalStateToVoiceParams(state: EmotionalState): VoiceParams {
   const moodMap: Record<Mood, Pick<VoiceParams, "stability" | "style">> = {
-    calm:       { stability: 0.75, style: 0.20 },
-    frustrated: { stability: 0.35, style: 0.80 },
-    passionate: { stability: 0.45, style: 0.75 },
-    defensive:  { stability: 0.55, style: 0.60 },
-    resigned:   { stability: 0.80, style: 0.10 },
+    calm:       { stability: V3_STABILITY.natural,  style: 0.20 },
+    frustrated: { stability: V3_STABILITY.creative, style: 0.80 },
+    passionate: { stability: V3_STABILITY.creative, style: 0.65 },
+    defensive:  { stability: V3_STABILITY.natural,  style: 0.50 },
+    resigned:   { stability: V3_STABILITY.natural,  style: 0.10 },
   };
   const { stability, style } = moodMap[state.mood];
   return {

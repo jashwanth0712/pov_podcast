@@ -12,12 +12,15 @@ import {
 
 // ─── Expected mapping table (Req 21.5) ───────────────────────────────────────
 
+// Aligned with ElevenLabs v3 best practices: stability snaps to one of the
+// three v3 presets (Creative=0.0, Natural=0.5, Robust=1.0). Robust is never
+// used because it dampens audio-tag responsiveness.
 const EXPECTED_MAPPING: Record<Mood, Pick<VoiceParams, "stability" | "style">> = {
-  calm:       { stability: 0.75, style: 0.20 },
-  frustrated: { stability: 0.35, style: 0.80 },
-  passionate: { stability: 0.45, style: 0.75 },
-  defensive:  { stability: 0.55, style: 0.60 },
-  resigned:   { stability: 0.80, style: 0.10 },
+  calm:       { stability: 0.5, style: 0.20 },
+  frustrated: { stability: 0.0, style: 0.80 },
+  passionate: { stability: 0.0, style: 0.65 },
+  defensive:  { stability: 0.5, style: 0.50 },
+  resigned:   { stability: 0.5, style: 0.10 },
 };
 
 const ALL_MOODS: Mood[] = ["calm", "frustrated", "passionate", "defensive", "resigned"];
@@ -36,53 +39,53 @@ const emotionalStateArb: fc.Arbitrary<EmotionalState> = fc.record({
 
 describe("mapEmotionalStateToVoiceParams — unit tests", () => {
   describe("exact mapping values (Req 21.5)", () => {
-    it("calm → stability 0.75, style 0.20", () => {
+    it("calm → stability 0.5 (Natural), style 0.20", () => {
       const params = mapEmotionalStateToVoiceParams({
         mood: "calm",
         convictionLevel: 0.5,
         willingnessToConcede: 0.5,
       });
-      expect(params.stability).toBe(0.75);
+      expect(params.stability).toBe(0.5);
       expect(params.style).toBe(0.20);
     });
 
-    it("frustrated → stability 0.35, style 0.80", () => {
+    it("frustrated → stability 0.0 (Creative), style 0.80", () => {
       const params = mapEmotionalStateToVoiceParams({
         mood: "frustrated",
         convictionLevel: 0.8,
         willingnessToConcede: 0.1,
       });
-      expect(params.stability).toBe(0.35);
+      expect(params.stability).toBe(0.0);
       expect(params.style).toBe(0.80);
     });
 
-    it("passionate → stability 0.45, style 0.75", () => {
+    it("passionate → stability 0.0 (Creative), style 0.65", () => {
       const params = mapEmotionalStateToVoiceParams({
         mood: "passionate",
         convictionLevel: 0.9,
         willingnessToConcede: 0.2,
       });
-      expect(params.stability).toBe(0.45);
-      expect(params.style).toBe(0.75);
+      expect(params.stability).toBe(0.0);
+      expect(params.style).toBe(0.65);
     });
 
-    it("defensive → stability 0.55, style 0.60", () => {
+    it("defensive → stability 0.5 (Natural), style 0.50", () => {
       const params = mapEmotionalStateToVoiceParams({
         mood: "defensive",
         convictionLevel: 0.6,
         willingnessToConcede: 0.3,
       });
-      expect(params.stability).toBe(0.55);
-      expect(params.style).toBe(0.60);
+      expect(params.stability).toBe(0.5);
+      expect(params.style).toBe(0.50);
     });
 
-    it("resigned → stability 0.80, style 0.10", () => {
+    it("resigned → stability 0.5 (Natural), style 0.10", () => {
       const params = mapEmotionalStateToVoiceParams({
         mood: "resigned",
         convictionLevel: 0.2,
         willingnessToConcede: 0.9,
       });
-      expect(params.stability).toBe(0.80);
+      expect(params.stability).toBe(0.5);
       expect(params.style).toBe(0.10);
     });
   });
@@ -99,14 +102,25 @@ describe("mapEmotionalStateToVoiceParams — unit tests", () => {
       }
     });
 
-    it("always sets model_id to 'eleven_flash_v2_5'", () => {
+    it("always sets model_id to 'eleven_v3'", () => {
       for (const mood of ALL_MOODS) {
         const params = mapEmotionalStateToVoiceParams({
           mood,
           convictionLevel: 0.5,
           willingnessToConcede: 0.5,
         });
-        expect(params.model_id).toBe("eleven_flash_v2_5");
+        expect(params.model_id).toBe("eleven_v3");
+      }
+    });
+
+    it("only uses v3 stability presets (Creative=0.0 or Natural=0.5); never Robust", () => {
+      for (const mood of ALL_MOODS) {
+        const params = mapEmotionalStateToVoiceParams({
+          mood,
+          convictionLevel: 0.5,
+          willingnessToConcede: 0.5,
+        });
+        expect([0.0, 0.5]).toContain(params.stability);
       }
     });
   });

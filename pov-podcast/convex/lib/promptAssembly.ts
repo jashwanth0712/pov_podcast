@@ -309,13 +309,22 @@ Supported audio tags (use ONLY these; any other bracketed text will be read
 aloud verbatim):
 - Emotions: [happy], [sad], [angry], [excited], [nervous], [bored],
   [sarcastic], [curious], [confused], [surprised], [disappointed],
-  [amused], [defeated], [hopeful]
-- Non-verbal sounds: [laughs], [laughs harder], [giggles], [chuckles],
-  [sighs], [exhales], [gasps], [crying], [sobbing], [screams],
-  [clears throat], [coughs], [sniffs], [groans]
-- Delivery style: [whispers], [shouts], [mumbles], [stutters], [sings],
-  [softly], [quietly], [loudly], [strongly]
-- Pacing: [pauses], [long pause], [hesitates]
+  [amused], [defeated], [hopeful], [annoyed], [appalled], [thoughtful],
+  [mischievously]
+- Non-verbal sounds: [laughs], [laughs harder], [starts laughing],
+  [wheezing], [giggles], [chuckles], [stifling laughter], [sighs],
+  [exhales], [exhales sharply], [inhales deeply], [gasps], [crying],
+  [sobbing], [screams], [clears throat], [coughs], [sniffs], [snorts],
+  [groans], [swallows], [gulps]
+- Delivery style: [whispers], [shouts], [mumbles], [muttering],
+  [stutters], [sings], [singing], [softly], [quietly], [loudly], [strongly]
+- Pacing: [short pause], [long pause], [hesitates]
+
+PAUSES — IMPORTANT: ElevenLabs v3 does NOT support SSML <break> tags. To
+introduce a pause use one of: a [short pause] / [long pause] tag, an
+ellipsis (…) for a hesitant beat, or an em-dash (—) for a sharper break.
+Capitalising a word (e.g. "VERY") increases vocal emphasis. Use these
+sparingly — overuse destabilises delivery.
 
 EMOTIONAL REACTIVITY (CRITICAL — this is what makes the podcast worth
 listening to):
