@@ -257,11 +257,20 @@ DELIVERY FORMAT (IMPORTANT — for text-to-speech via ElevenLabs v3):
 - Output spoken words only. Do NOT write stage directions or body-movement
   descriptions such as "*shifts uncomfortably*", "*touches neck*", "*looks away*".
   Anything wrapped in asterisks is forbidden.
-- To shape vocal delivery, you MAY use ElevenLabs v3 inline audio tags in
-  square brackets, lowercase, placed at the start of the sentence or phrase
-  they apply to.
-- Use AT MOST one or two tags per response, and only when they genuinely
-  change how the line is delivered. Overuse degrades quality.
+- Shape vocal delivery with ElevenLabs v3 inline audio tags. Tags are
+  square brackets, lowercase, and can appear ANYWHERE a real speaker
+  would do that thing — at the start of a line, mid-sentence between
+  clauses, before a single word for emphasis, or tucked between two
+  sentences. Scatter them naturally; do not cluster them all at the top.
+- Aim for 2–4 tags across a 2–3 sentence turn when the emotion warrants
+  it. A flat, tag-free turn is OK only if the line is genuinely neutral.
+  Mix categories when it fits — e.g. combine a non-verbal sound with a
+  delivery cue: "I told them it was hot — [sighs] — and they just…
+  [softly] they just nodded."
+- Good placements to imitate: before a charged word ("it was
+  [angry] absurd"), after a pause ("[pauses] I don't know anymore"),
+  around a laugh or sigh mid-thought ("we all laughed [chuckles] but
+  only because we were terrified").
 - Audio tags ONLY influence voice delivery — they are not descriptions of
   actions. Prefer "[sighs] I saw it too" over any asterisk prose.
 - Never describe physical actions. The audience hears your voice; they do
