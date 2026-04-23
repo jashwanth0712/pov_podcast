@@ -16,6 +16,9 @@ interface PersonaSummary {
 
 type CardSize = "large" | "medium" | "small";
 
+const DEFAULT_DISCLAIMER =
+  "Persona narratives are AI-generated interpretations inspired by historical events and do not represent verified historical fact.";
+
 interface ScenarioCardProps {
   id: Id<"scenarios">;
   title: string;
@@ -41,7 +44,7 @@ const SIZE_CONFIG: Record<CardSize, {
   large: {
     titleClass: "text-2xl sm:text-3xl",
     descLines: "line-clamp-2",
-    descLimit: 180,
+    descLimit: 200,
     padding: "p-5 sm:p-6",
     avatarSize: "h-9 w-9",
     rounded: "rounded-3xl",
@@ -49,7 +52,7 @@ const SIZE_CONFIG: Record<CardSize, {
   medium: {
     titleClass: "text-lg sm:text-xl",
     descLines: "line-clamp-2",
-    descLimit: 100,
+    descLimit: 200,
     padding: "p-4 sm:p-5",
     avatarSize: "h-8 w-8",
     rounded: "rounded-3xl",
@@ -57,7 +60,7 @@ const SIZE_CONFIG: Record<CardSize, {
   small: {
     titleClass: "text-base sm:text-lg",
     descLines: "line-clamp-1",
-    descLimit: 60,
+    descLimit: 200,
     padding: "p-3 sm:p-4",
     avatarSize: "h-7 w-7",
     rounded: "rounded-2xl",
@@ -102,6 +105,7 @@ export function ScenarioCard({
   era,
   description,
   personas = [],
+  contentDisclaimer = DEFAULT_DISCLAIMER,
   bannerImageUrl,
   onSelect,
   size = "medium",
@@ -139,8 +143,8 @@ export function ScenarioCard({
       ? description.slice(0, config.descLimit - 3) + "…"
       : description;
 
-  const visiblePersonas = personas.slice(0, 4);
-  const extraCount = personas.length > 4 ? personas.length - 4 : 0;
+  const visiblePersonas = personas.slice(0, 6);
+  const extraCount = personas.length > 6 ? personas.length - 6 : 0;
 
   const eraBadgeClass = ERA_COLOURS[era] ?? "bg-zinc-500/20 text-zinc-200 border-zinc-400/30";
 
@@ -179,7 +183,7 @@ export function ScenarioCard({
       {visiblePersonas.length > 0 && (
         <div
           className="absolute top-4 left-4 flex items-center gap-2"
-          aria-label={`${personas.length} persona${personas.length !== 1 ? "s" : ""}`}
+          aria-label={`${visiblePersonas.length} persona${visiblePersonas.length !== 1 ? "s" : ""}`}
         >
           <div className="flex -space-x-2">
             {visiblePersonas.map((persona, i) => (
@@ -209,7 +213,7 @@ export function ScenarioCard({
           </div>
           {extraCount > 0 && (
             <span className="text-xs font-medium text-white/80">
-              +{extraCount} More
+              {`+${extraCount}`}
             </span>
           )}
         </div>
@@ -240,6 +244,11 @@ export function ScenarioCard({
         {/* Description */}
         <p className={`text-sm leading-relaxed text-white/60 ${config.descLines}`}>
           {displayDescription}
+        </p>
+
+        {/* Content disclaimer (Req 8.2) */}
+        <p className="text-[10px] leading-tight text-white/40 mt-1">
+          {contentDisclaimer}
         </p>
       </div>
 

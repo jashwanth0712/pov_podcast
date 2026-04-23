@@ -101,36 +101,36 @@ Implement the POV Podcast platform incrementally, starting with the data layer a
 - [x] 6. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [-] 7. Session setup and persona agent instantiation
-  - [-] 7.1 Implement `SessionSetup` component
+- [x] 7. Session setup and persona agent instantiation
+  - [x] 7.1 Implement `SessionSetup` component
     - Depth level picker (Casual / Intermediate / Scholar), optional Calibration Persona flow, turn-taking mode selector (default: Relevance)
     - Persist selected depth level to `userPreferences` via `updateUserDefaultDepthLevel`; load stored default on next session start
     - _Requirements: 14.10, 19.1, 19.2, 19.4, 19.5_
 
-  - [-] 7.2 Implement `startSession` Convex mutation
+  - [x] 7.2 Implement `startSession` Convex mutation
     - Create session record; derive `userId` from `ctx.auth`
     - Instantiate `personaAgentStates` records for each persona with initial emotional state
     - Create root branch record
     - _Requirements: 3.3, 4.1, 14.10_
 
-  - [-] 7.3 Implement persona system prompt assembly
+  - [x] 7.3 Implement persona system prompt assembly
     - Build system prompt encoding name, historical role, ≥3 personality traits, emotional backstory (≥200 words), speaking style, ideological position, ≥3 article references, and all pairwise relationship descriptors
     - Apply depth level modifier (Casual / Intermediate / Scholar) to the prompt
     - Apply emotional state modifier (mood, conviction, willingness to concede)
     - Apply relationship tone modifier when preceding turn is from a related persona
     - _Requirements: 3.4, 3.5, 15.1, 19.3, 20.2, 20.5, 21.4, 21.9_
 
-  - [ ] 7.4 Write property test for depth level presence in generation prompt
+  - [x] 7.4 Write property test for depth level presence in generation prompt
     - **Property 15: Depth Level Is Present in Every Generation Prompt**
     - **Validates: Requirements 19.3**
 
-  - [ ] 7.5 Implement `personaRelationships` seeding and `getPersonaStates` query
+  - [x] 7.5 Implement `personaRelationships` seeding and `getPersonaStates` query
     - Define all pairwise relationships for each pre-built scenario
     - Expose real-time query for current emotional state per persona
     - _Requirements: 20.1, 20.2_
 
-- [ ] 8. Dialogue turn generation and orchestration
-  - [ ] 8.1 Implement `generatePersonaTurn` Convex action
+- [x] 8. Dialogue turn generation and orchestration
+  - [x] 8.1 Implement `generatePersonaTurn` Convex action
     - Assemble context window: system prompt + compaction summaries + recent context messages + shared conversation log
     - Call OpenRouter with assembled context (`max_tokens: 400`, `temperature: 0.8`)
     - Validate expressiveness (emotional statement, personal struggle reference, or ideological assertion); regenerate once on failure; deliver with `qualityWarning: true` after two failures
@@ -140,58 +140,58 @@ Implement the POV Podcast platform incrementally, starting with the data layer a
     - See [Convex patterns](./convex-patterns.md) for action patterns with scheduled mutations
     - _Requirements: 3.3, 3.5, 8.1, 8.3, 8.4, 8.5, 8.6, 15.2, 15.4, 15.8_
 
-  - [ ] 8.2 Write property test for expressiveness validation
+  - [x] 8.2 Write property test for expressiveness validation
     - **Property 14: Expressiveness Validation Accepts Turns with Required Elements**
     - **Validates: Requirements 15.2**
 
-  - [ ] 8.3 Implement relevance scoring algorithm in `orchestrateTurn`
+  - [x] 8.3 Implement relevance scoring algorithm in `orchestrateTurn`
     - Score each persona: `emotionalRelevanceScore × 0.4 + relationshipFactor × 0.3 + ideologicalTensionScore × 0.3`
     - Exclude last speaker; factor in relationship dynamics (rival/ally bonuses)
     - Pre-generate 2–4 turns ahead in parallel (text only)
     - _Requirements: 14.2, 20.3, 21.6_
 
-  - [ ] 8.4 Write property test for Round Robin turn-taking
+  - [x] 8.4 Write property test for Round Robin turn-taking
     - **Property 6: Round Robin Turn-Taking Cycles Through All Personas**
     - **Validates: Requirements 14.3**
 
-  - [ ] 8.5 Write property test for Random turn-taking
+  - [x] 8.5 Write property test for Random turn-taking
     - **Property 7: Random Turn-Taking Never Repeats Last Speaker**
     - **Validates: Requirements 14.4**
 
-  - [ ] 8.6 Implement Round Robin and Random turn-taking modes
+  - [x] 8.6 Implement Round Robin and Random turn-taking modes
     - Round Robin: advance `roundRobinIndex` pointer, wrap around
     - Random: random draw excluding last speaker
     - _Requirements: 14.3, 14.4_
 
-  - [ ] 8.7 Implement deadlock detection and moderator escalation
+  - [x] 8.7 Implement deadlock detection and moderator escalation
     - Detect ≥3 consecutive turns with identical ideological position markers
     - On deadlock: trigger `generateModeratorTurn` or inject topic nudge
     - Log deadlock event to `deadlockEvents` table
     - Implement `generateModeratorTurn` action (neutral voice, no historical POV, within 5 seconds)
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 17.7_
 
-  - [ ] 8.8 Write property test for deadlock detection
+  - [x] 8.8 Write property test for deadlock detection
     - **Property 13: Deadlock Detection Fires on Repeated Positions**
     - **Validates: Requirements 17.1**
 
-- [ ] 9. Checkpoint — Ensure all tests pass
+- [x] 9. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 10. Dialogue turn serialisation and persistence
-  - [ ] 10.1 Implement dialogue turn serialisation/deserialisation
+- [x] 10. Dialogue turn serialisation and persistence
+  - [x] 10.1 Implement dialogue turn serialisation/deserialisation
     - Serialise each turn to JSON with fields: `personaId`, `turnIndex`, `text`, `audioUrl`, `timestamp`
     - Deserialise and validate all required fields; return descriptive error and block persistence on missing fields
     - _Requirements: 12.1, 12.2, 12.3, 12.4_
 
-  - [ ] 10.2 Write property test for dialogue turn serialisation round-trip
+  - [x] 10.2 Write property test for dialogue turn serialisation round-trip
     - **Property 1: Dialogue Turn Serialisation Round-Trip**
     - **Validates: Requirements 12.1, 12.2, 12.3**
 
-  - [ ] 10.3 Write property test for incomplete dialogue turn rejection
+  - [x] 10.3 Write property test for incomplete dialogue turn rejection
     - **Property 2: Incomplete Dialogue Turn Documents Are Rejected**
     - **Validates: Requirements 12.4**
 
-  - [ ] 10.4 Implement `persistDialogueTurn` mutation
+  - [x] 10.4 Implement `persistDialogueTurn` mutation
     - Save turn after every dialogue turn so no more than one turn of progress is lost
     - Attach article references and emotional state snapshot to the turn record
     - Set `qualityWarning` flag when applicable
