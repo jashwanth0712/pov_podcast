@@ -174,11 +174,12 @@ export function HomePage() {
               </p>
             </div>
 
-            {/* Glassmorphic filter chips */}
+            {/* Glassmorphic filter chips — horizontal scroll on mobile so the
+                chip row stays a single line at any viewport width. */}
             <div
               role="group"
               aria-label="Filter scenarios by era"
-              className="flex items-center gap-2 flex-wrap p-1.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/10"
+              className="flex items-center gap-1.5 sm:gap-2 flex-nowrap sm:flex-wrap overflow-x-auto sm:overflow-visible p-1.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
               {ERA_FILTER_OPTIONS.map((era) => (
                 <button
@@ -186,7 +187,7 @@ export function HomePage() {
                   onClick={() => handleEraChange(era)}
                   aria-pressed={selectedEra === era}
                   className={`
-                    rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200
+                    shrink-0 whitespace-nowrap rounded-full px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium transition-all duration-200
                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50
                     ${
                       selectedEra === era
