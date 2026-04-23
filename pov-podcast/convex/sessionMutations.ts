@@ -210,3 +210,49 @@ export const updateRoundRobinIndex = internalMutation({
     return { success: true };
   },
 });
+
+/**
+ * Marks a branch as pruned and deletes all associated dialogue turns and
+ * persona agent states. The branch record itself is retained (just marked pruned).
+ *
+ * Requirements: 16.6, 16.7
+ */
+export const pruneBranch = internalMutation({
+  args: {
+    sessionId: v.id("sessions"),
+    branchId: v.id("branches"),
+  },
+  handler: async (ctx, args) => {
+    const branch = await ctx.db.get(args.branchId);
+    if (!branch || branch.sessionId !== args.sessionId) {
+      throw new Error("Branch not found.");
+    }
+
+    // Mark the branch as pruned
+    await ctx.db.patch(args.branchId, { isPruned: true });
+
+    // Delete all dialogueTurns for this branch
+    const turns = await ctx.db
+      .query("dialogueTurns")
+      .withIndex("by_branchId_turnIndex", (q) => q.eq("branchId", args.branchId))
+      .collect();
+
+    for (const turn of turns) {
+      await ctx.db.delete(turn._id);
+    }
+
+    // Delete all personaAgentStates for this branch
+    const states = await ctx.db
+      .query("personaAgentStates")
+      .withIndex("by_sessionId_branchId", (q) =>
+        q.eq("sessionId", args.sessionId).eq("branchId", args.branchId)
+      )
+      .collect();
+
+    for (const state of states) {
+      await ctx.db.delete(state._id);
+    }
+
+    return { success: true, prunedTurns: turns.length, prunedStates: states.length };
+  },
+});

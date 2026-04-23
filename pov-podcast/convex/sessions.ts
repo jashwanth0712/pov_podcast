@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 
 /**
  * Creates a new session, instantiates personaAgentStates for each persona,
@@ -112,6 +113,40 @@ export const startSession = mutation({
 });
 
 /**
+ * Creates a new branch forked from the current active branch at a given turn index.
+ * Records the fork point turn index and parent branch ID on the new branch.
+ *
+ * Requirements: 4.9, 5.4, 16.1, 16.2
+ */
+export const createBranch = mutation({
+  args: {
+    sessionId: v.id("sessions"),
+    forkPointTurnIndex: v.number(),
+    forkPointTurnId: v.optional(v.id("dialogueTurns")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated.");
+
+    const session = await ctx.db.get(args.sessionId);
+    if (!session || session.userId !== userId) throw new Error("Session not found.");
+
+    const now = Date.now();
+    const branchId = await ctx.db.insert("branches", {
+      sessionId: args.sessionId,
+      parentBranchId: session.activeBranchId,
+      forkPointTurnIndex: args.forkPointTurnIndex,
+      forkPointTurnId: args.forkPointTurnId,
+      createdAt: now,
+      lastNavigatedAt: undefined,
+      isPruned: false,
+    });
+
+    return branchId;
+  },
+});
+
+/**
  * Pauses an active session, stopping playback and preserving dialogue position.
  * Requirements: 4.7, 7.5
  */
@@ -129,6 +164,11 @@ export const pauseSession = mutation({
     await ctx.db.patch(args.sessionId, {
       status: "paused",
       lastActivityAt: Date.now(),
+    });
+
+    // Schedule auto-pruning of never-navigated branches (Req 16.6, 16.7)
+    await ctx.scheduler.runAfter(0, internal.branchMutations.autoPruneBranches, {
+      sessionId: args.sessionId,
     });
 
     return { success: true };
@@ -177,6 +217,11 @@ export const endSession = mutation({
     await ctx.db.patch(args.sessionId, {
       status: "completed",
       lastActivityAt: Date.now(),
+    });
+
+    // Schedule auto-pruning of never-navigated branches (Req 16.6, 16.7)
+    await ctx.scheduler.runAfter(0, internal.branchMutations.autoPruneBranches, {
+      sessionId: args.sessionId,
     });
 
     return { success: true };
@@ -406,8 +451,13 @@ export const forceNextSpeaker = mutation({
 });
 
 /**
- * Navigates to a specific branch and updates lastNavigatedAt.
- * Requirements: 5.10, 16.4
+ * Navigates to a specific branch, updates lastNavigatedAt, and restores all
+ * persona emotional states to the values recorded at the fork point.
+ *
+ * The fork point emotional states are stored as `emotionalStateSnapshot` on the
+ * `dialogueTurns` at the fork point turn index on the PARENT branch.
+ *
+ * Requirements: 5.10, 16.2, 16.4, 21.8
  */
 export const navigateToBranch = mutation({
   args: {
@@ -431,6 +481,71 @@ export const navigateToBranch = mutation({
       activeBranchId: args.branchId,
       lastActivityAt: now,
     });
+
+    // Restore emotional states from the fork point snapshot (Req 16.2, 21.8)
+    // Only applies to non-root branches (root has no forkPointTurnIndex)
+    if (
+      branch.forkPointTurnIndex !== undefined &&
+      branch.forkPointTurnIndex !== null &&
+      branch.parentBranchId !== undefined &&
+      branch.parentBranchId !== null
+    ) {
+      // Find the turn at the fork point on the parent branch
+      const forkTurn = await ctx.db
+        .query("dialogueTurns")
+        .withIndex("by_branchId_turnIndex", (q) =>
+          q
+            .eq("branchId", branch.parentBranchId!)
+            .eq("turnIndex", branch.forkPointTurnIndex!)
+        )
+        .first();
+
+      if (forkTurn?.emotionalStateSnapshot) {
+        const snapshot = forkTurn.emotionalStateSnapshot;
+
+        // Get all persona agent states for this session on the new branch
+        const existingStates = await ctx.db
+          .query("personaAgentStates")
+          .withIndex("by_sessionId_branchId", (q) =>
+            q.eq("sessionId", args.sessionId).eq("branchId", args.branchId)
+          )
+          .collect();
+
+        // Get all persona agent states from the parent branch to know which personas exist
+        const parentStates = await ctx.db
+          .query("personaAgentStates")
+          .withIndex("by_sessionId_branchId", (q) =>
+            q.eq("sessionId", args.sessionId).eq("branchId", branch.parentBranchId!)
+          )
+          .collect();
+
+        for (const parentState of parentStates) {
+          const existingState = existingStates.find(
+            (s) => s.personaId === parentState.personaId
+          );
+
+          if (existingState) {
+            // Update existing record with restored emotional state
+            await ctx.db.patch(existingState._id, {
+              emotionalState: snapshot,
+              lastUpdatedAt: now,
+            });
+          } else {
+            // Create new record for this branch with restored emotional state
+            await ctx.db.insert("personaAgentStates", {
+              sessionId: args.sessionId,
+              personaId: parentState.personaId,
+              branchId: args.branchId,
+              emotionalState: snapshot,
+              contextMessages: [],
+              compactionSummaries: [],
+              messageCount: 0,
+              lastUpdatedAt: now,
+            });
+          }
+        }
+      }
+    }
 
     return { success: true };
   },

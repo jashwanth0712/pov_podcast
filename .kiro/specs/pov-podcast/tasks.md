@@ -4,6 +4,21 @@
 
 Implement the POV Podcast platform incrementally, starting with the data layer and authentication, then building the scenario library and generation pipeline, followed by the session player with persona agents, branching dialogue, and finally the advanced features (emotional state tracking, context compaction, conversation tree navigation, and content moderation). Each task builds directly on the previous, wiring components together as they are completed.
 
+## Environment Variables (already configured in Convex)
+
+The following API keys are already set in the Convex deployment environment and can be accessed from Convex actions via `process.env.<VAR_NAME>`. Do NOT hardcode or prompt for these — read them from env. To view or update: `npx convex env list` / `npx convex env set <KEY> <VALUE>`.
+
+- `ELEVENLABS_API_KEY` — ElevenLabs API key. Used for:
+  - TTS WebSocket streaming (task 16.1): `wss://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream-input?model_id=eleven_flash_v2_5`
+  - Scribe STT (task 15.1): `POST https://api.elevenlabs.io/v1/speech-to-text` with `model_id: "scribe_v1"`
+  - Voice ID catalogue lookup (already used in scenario generation)
+- `OPENROUTER_API_KEY` — OpenRouter key for dialogue generation, moderator turns, content moderation, context compaction, and scenario generation.
+- `OPENROUTER_MODEL` — OpenRouter model ID for text generation.
+- `RUNPOD_ENDPOINT_URL` — RunPod endpoint for avatar/image generation.
+- `GEMINI_MODEL_ID` — Gemini model ID (where applicable).
+
+**Security note — browser ElevenLabs access:** Do NOT expose `ELEVENLABS_API_KEY` to the client bundle. For STT (task 15.1), upload the audio blob to a Convex HTTP action that proxies to ElevenLabs. For TTS WebSocket streaming (task 16.1), either (a) have the client send text to a Convex action that opens the ElevenLabs WS and streams base64 audio chunks back, or (b) mint short-lived signed request URLs server-side. The API key must never leave the server.
+
 ## Tasks
 
 - [ ] 1. Project setup and data schema
@@ -197,30 +212,30 @@ Implement the POV Podcast platform incrementally, starting with the data layer a
     - Set `qualityWarning` flag when applicable
     - _Requirements: 7.4, 13.2, 21.1_
 
-- [ ] 11. Branching dialogue and conversation tree
-  - [ ] 11.1 Implement `createBranch` and `navigateToBranch` mutations
+- [x] 11. Branching dialogue and conversation tree
+  - [x] 11.1 Implement `createBranch` and `navigateToBranch` mutations
     - Record fork point turn index and parent branch ID on new branch
     - Restore all persona emotional states to the values recorded at the fork point
     - Navigate to branch and restore last position within 500ms
     - _Requirements: 4.9, 5.4, 16.1, 16.2, 16.4, 21.8_
 
-  - [ ] 11.2 Write property test for branch fork preserving prior history
+  - [x] 11.2 Write property test for branch fork preserving prior history
     - **Property 4: Branch Fork Preserves Prior History**
     - **Validates: Requirements 16.1, 5.4**
 
-  - [ ] 11.3 Implement `pruneBranch` mutation and `autoPruneBranches` scheduled function
+  - [x] 11.3 Implement `pruneBranch` mutation and `autoPruneBranches` scheduled function
     - Delete all turns, audio URLs, and emotional state snapshots for pruned branches
     - Fire `autoPruneBranches` when session transitions to `paused` or `completed`; prune all branches where `lastNavigatedAt` is null
     - _Requirements: 16.6, 16.7_
 
-  - [ ] 11.4 Implement `getConversationTree` query and conversation tree UI
+  - [x] 11.4 Implement `getConversationTree` query and conversation tree UI
     - Return all branches and fork points for a session
     - Render visual conversation tree in `SessionSettingsSheet` showing all branches, fork points, and current position
     - Display branch fork dividers in the transcript panel
     - _Requirements: 4.10, 16.3, 16.5_
 
-- [ ] 12. Context compaction
-  - [ ] 12.1 Implement `compactPersonaContext` Convex action
+- [x] 12. Context compaction
+  - [x] 12.1 Implement `compactPersonaContext` Convex action
     - Trigger when a persona agent's context window reaches 20 messages
     - Generate structured summary via OpenRouter capturing key events, emotional arc, ideological positions, and concessions
     - Replace 20 raw messages with single summary prepended with `[COMPACTED HISTORY]` marker
@@ -228,30 +243,30 @@ Implement the POV Podcast platform incrementally, starting with the data layer a
     - See [OpenRouter API documentation](./openrouter-api.md) for context compaction config and prompt template
     - _Requirements: 23.1, 23.2, 23.3, 23.4, 23.5, 23.6, 23.7_
 
-  - [ ] 12.2 Write property test for context compaction
+  - [x] 12.2 Write property test for context compaction
     - **Property 8: Context Compaction Replaces Messages with Marked Summary**
     - **Validates: Requirements 23.2, 23.3, 23.4, 23.5**
 
-- [ ] 13. Checkpoint — Ensure all tests pass
+- [x] 13. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 14. User interruption and content moderation
-  - [ ] 14.1 Implement interruption input validation
+- [x] 14. User interruption and content moderation
+  - [x] 14.1 Implement interruption input validation
     - Reject inputs of length 0 or composed entirely of whitespace; accept 1–1000 non-whitespace-containing characters
     - _Requirements: 5.3, 5.8_
 
-  - [ ] 14.2 Write property test for interruption input validation
+  - [x] 14.2 Write property test for interruption input validation
     - **Property 3: Interruption Input Validation Boundaries**
     - **Validates: Requirements 5.3, 5.8**
 
-  - [ ] 14.3 Implement `moderateInterruption` Convex action
+  - [x] 14.3 Implement `moderateInterruption` Convex action
     - Call OpenRouter with classification prompt; enforce 2-second timeout
     - Return `SAFE` / `UNSAFE` with reason
     - Log rejected interruptions (session ID, timestamp, reason) to `rejectedInterruptions` — do NOT store full content
     - See [OpenRouter API documentation](./openrouter-api.md) for content moderation config with timeout
     - _Requirements: 25.1, 25.2, 25.3, 25.4, 25.5_
 
-  - [ ] 14.4 Implement `submitInterruption` Convex mutation
+  - [x] 14.4 Implement `submitInterruption` Convex mutation
     - Orchestrate: validate → moderate → record fork point → `createBranch` → `generatePersonaTurn` responding to user input within 5 seconds
     - Incorporate user message into new branch context
     - Continue generating turns on new branch influenced by user input
