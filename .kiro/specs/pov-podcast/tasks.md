@@ -371,18 +371,18 @@ The following API keys are already set in the Convex deployment environment and 
     - Ensure home page (including scenario library) loads within 3 seconds on 10 Mbps connection
     - _Requirements: 10.1_
 
-- [-] 21. Source map and relationship map
-  - [-] 21.1 Implement source map view
+- [x] 21. Source map and relationship map
+  - [x] 21.1 Implement source map view
     - Collect all article references surfaced during a session; deduplicate and group by citing persona
     - Annotate each reference with ideological alignment relative to other sources in the map
     - On selection: display persona-generated explanation of why the source was cited
     - _Requirements: 13.5, 18.4, 18.5_
 
-  - [-] 21.2 Implement relationship map view
+  - [x] 21.2 Implement relationship map view
     - Display all personas as nodes with pairwise relationship edges labelled by type (alliance, rivalry, mentor/student, ideological kinship, historical enmity)
     - _Requirements: 20.4_
 
-- [ ] 22. Final checkpoint — Ensure all tests pass
+- [x] 22. Final checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
