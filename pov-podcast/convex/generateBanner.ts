@@ -103,6 +103,21 @@ function buildBannerPrompt(
   return `Cinematic wide shot depicting "${scenario.title}" from the ${scenario.era} era (${scenario.timePeriod}). ${scenario.description}. Dramatic historical scene, epic composition, atmospheric lighting, muted period-appropriate colors, painterly style, suitable as a banner image. Negative prompt: blurry, low-res, watermark, text, logo, modern elements, people facing camera, portraits, faces in focus`;
 }
 
+// Fallback prompt used when the primary prompt is rejected by the provider's
+// content moderation (e.g. scenarios about war, assassinations, disasters).
+// Strips the title and description — which typically contain the triggering
+// language — and relies on era + time period alone to evoke the setting.
+function buildSafeBannerPrompt(
+  scenario: { timePeriod: string; era: string }
+): string {
+  return `Evocative period landscape from the ${scenario.era} era (${scenario.timePeriod}). Wide establishing shot, empty scene, atmospheric lighting, painterly style, muted tones, historical architecture or countryside, no people, no text. Negative prompt: blurry, low-res, watermark, text, logo, modern elements, faces, portraits, violence, weapons, blood`;
+}
+
+function isModerationError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /moderat|content policy|400/i.test(msg);
+}
+
 export const generateBanner = action({
   args: {
     scenarioId: v.id("scenarios"),
@@ -134,7 +149,17 @@ export const generateBanner = action({
         description: scenario.description,
       });
 
-      const imageUrl = await generateImageWithOpenRouter(bannerPrompt, openrouterApiKey);
+      let imageUrl: string;
+      try {
+        imageUrl = await generateImageWithOpenRouter(bannerPrompt, openrouterApiKey);
+      } catch (err) {
+        if (!isModerationError(err)) throw err;
+        const safePrompt = buildSafeBannerPrompt({
+          timePeriod: scenario.timePeriod,
+          era: scenario.era,
+        });
+        imageUrl = await generateImageWithOpenRouter(safePrompt, openrouterApiKey);
+      }
 
       // Upload to Convex storage (handles both base64 and URL)
       const storageId = await uploadToStorage(ctx, imageUrl);
