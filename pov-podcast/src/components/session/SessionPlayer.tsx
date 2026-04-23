@@ -107,6 +107,10 @@ interface StageAreaProps {
   isPaused?: boolean;
   /** Index of the persona in the full list (for avatar colour). */
   personaIndex?: number;
+  /** Voice engine ref, used to poll live amplitude for the rhythmic halo. */
+  voiceEngineRef?: React.RefObject<VoiceEngine | null>;
+  /** True while audio is actively playing for the speaking persona. */
+  isActivelySpeaking?: boolean;
 }
 
 /**
@@ -122,6 +126,8 @@ export function StageArea({
   speakingPersona,
   isPaused = false,
   personaIndex = 0,
+  voiceEngineRef,
+  isActivelySpeaking = false,
 }: StageAreaProps) {
   const mood = speakingPersona?.emotionalState?.mood ?? "calm";
   const moodCfg = MOOD_CONFIG[mood];
@@ -129,6 +135,52 @@ export function StageArea({
   const hasAvatar =
     speakingPersona?.avatarGenerationStatus === "complete" &&
     speakingPersona?.profileImageUrl;
+
+  // Refs we write to on every rAF tick — avoids React reconciliation.
+  const haloRef = useRef<HTMLSpanElement | null>(null);
+  const ringBorderRef = useRef<HTMLDivElement | null>(null);
+  const smoothedRef = useRef(0);
+
+  useEffect(() => {
+    if (!isActivelySpeaking || isPaused || !speakingPersona) {
+      // Reset to resting state.
+      if (haloRef.current) {
+        haloRef.current.style.transform = "scale(1)";
+        haloRef.current.style.opacity = "0.15";
+      }
+      if (ringBorderRef.current) {
+        ringBorderRef.current.style.boxShadow = `0 0 18px ${moodCfg.ringColour}33`;
+      }
+      smoothedRef.current = 0;
+      return;
+    }
+
+    let raf = 0;
+    const tick = () => {
+      const amp = voiceEngineRef?.current?.getAmplitude() ?? 0;
+      // Exponential smoothing so the halo breathes instead of twitching.
+      const smoothed = smoothedRef.current * 0.7 + amp * 0.3;
+      smoothedRef.current = smoothed;
+
+      if (haloRef.current) {
+        const scale = 1 + smoothed * 0.45;
+        const opacity = 0.22 + smoothed * 0.55;
+        haloRef.current.style.transform = `scale(${scale.toFixed(3)})`;
+        haloRef.current.style.opacity = opacity.toFixed(3);
+      }
+      if (ringBorderRef.current) {
+        const glowAlpha = Math.round((0.3 + smoothed * 0.7) * 255)
+          .toString(16)
+          .padStart(2, "0");
+        const spread = 24 + smoothed * 36;
+        ringBorderRef.current.style.boxShadow = `0 0 ${spread.toFixed(0)}px ${moodCfg.ringColour}${glowAlpha}`;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [isActivelySpeaking, isPaused, speakingPersona, moodCfg.ringColour, voiceEngineRef]);
 
   // Announcement text for screen readers — updated simultaneously with visual
   // changes so users relying on audio receive the same info (Req 9.5).
@@ -154,25 +206,38 @@ export function StageArea({
       >
         {speakerAnnouncement}
       </div>
-      {/* Large avatar with animated pulsing ring */}
+      {/* Large avatar with amplitude-driven halo */}
       <div className="relative flex items-center justify-center">
-        {/* Outer pulsing ring — only animate when actively speaking */}
-        {speakingPersona && !isPaused && (
+        {/* Outer halo — scale + opacity written each frame from TTS amplitude */}
+        {speakingPersona && (
           <span
-            className="absolute inset-0 rounded-full animate-ping opacity-30"
-            style={{ backgroundColor: moodCfg.ringColour }}
+            ref={haloRef}
+            className="absolute inset-0 rounded-full pointer-events-none"
+            style={{
+              backgroundColor: moodCfg.ringColour,
+              opacity: 0.15,
+              transform: "scale(1)",
+              transition: "background-color 500ms ease-out",
+              willChange: "transform, opacity",
+            }}
             aria-hidden="true"
           />
         )}
 
-        {/* Coloured ring border */}
+        {/* Coloured ring border + mood-coloured glow (box-shadow) */}
         <div
-          className="relative rounded-full p-[3px] transition-all duration-500"
+          ref={ringBorderRef}
+          className="relative rounded-full p-[3px]"
           style={{
             background: speakingPersona
-              ? `${moodCfg.ringColour}`
+              ? moodCfg.ringColour
               : "rgba(255,255,255,0.1)",
             opacity: isPaused ? 0.5 : 1,
+            transition:
+              "background-color 500ms ease-out, box-shadow 250ms ease-out, opacity 300ms ease-out",
+            boxShadow: speakingPersona
+              ? `0 0 18px ${moodCfg.ringColour}33`
+              : "none",
           }}
         >
           {/* Avatar image or initials fallback */}
@@ -211,17 +276,17 @@ export function StageArea({
             {speakingPersona.historicalRole}
           </p>
 
-          {/* Emotional state badge */}
+          {/* Emotional state pill — colour transitions smoothly as mood shifts */}
           <span
             className={`
               inline-flex items-center gap-1.5 rounded-full border px-3 py-1
-              text-xs font-semibold
+              text-xs font-semibold transition-colors duration-500
               ${moodCfg.badgeClass}
             `}
             aria-label={`Emotional state: ${moodCfg.label}`}
           >
             <span aria-hidden="true">{moodCfg.icon}</span>
-            {moodCfg.label}
+            <span>Feeling {moodCfg.label.toLowerCase()}</span>
           </span>
         </div>
       ) : (
@@ -891,6 +956,8 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
           speakingPersona={speakingPersona}
           isPaused={isPaused}
           personaIndex={speakingPersonaIndex}
+          voiceEngineRef={voiceEngineRef}
+          isActivelySpeaking={currentSpeakingPersonaId !== null}
         />
 
         {/* Persona grid */}

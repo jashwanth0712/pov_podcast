@@ -242,76 +242,86 @@ async function callOpenRouter(
   return content;
 }
 
+type EmotionalStateShape = PersonaAgentState["emotionalState"];
+
+const VALID_MOODS: ReadonlyArray<EmotionalStateShape["mood"]> = [
+  "calm",
+  "frustrated",
+  "passionate",
+  "defensive",
+  "resigned",
+];
+
 /**
- * Infers a new emotional state from the generated turn text.
- * Uses simple heuristics to update mood, conviction, and willingness to concede.
+ * Parses the structured `MOOD: / CONVICTION: / CONCEDE:` suffix that the
+ * persona prompt requires the LLM to append, and returns both the updated
+ * emotional state and the spoken text with the suffix stripped.
+ *
+ * If the suffix is missing or malformed, falls back to the current state
+ * (no change) and returns the raw text untouched.
  */
-function inferEmotionalStateUpdate(
-  currentState: PersonaAgentState["emotionalState"],
-  turnText: string
-): PersonaAgentState["emotionalState"] {
-  const lower = turnText.toLowerCase();
+function parseEmotionalStateFromTurn(
+  currentState: EmotionalStateShape,
+  rawTurnText: string
+): { spokenText: string; nextState: EmotionalStateShape } {
+  // Match each line anywhere near the end of the response. Tolerate minor
+  // formatting drift (case, leading whitespace, trailing commentary).
+  const moodMatch = rawTurnText.match(/^[ \t]*MOOD\s*:\s*([A-Za-z]+)\s*$/im);
+  const convictionMatch = rawTurnText.match(
+    /^[ \t]*CONVICTION\s*:\s*([0-9]*\.?[0-9]+)\s*$/im
+  );
+  const concedeMatch = rawTurnText.match(
+    /^[ \t]*CONCEDE\s*:\s*([0-9]*\.?[0-9]+)\s*$/im
+  );
 
-  // Mood inference
-  let mood = currentState.mood;
-  if (
-    lower.includes("outrage") ||
-    lower.includes("furious") ||
-    lower.includes("cannot believe") ||
-    lower.includes("infuriating")
-  ) {
-    mood = "frustrated";
-  } else if (
-    lower.includes("passionate") ||
-    lower.includes("deeply believe") ||
-    lower.includes("must fight") ||
-    lower.includes("urgent")
-  ) {
-    mood = "passionate";
-  } else if (
-    lower.includes("defend") ||
-    lower.includes("under attack") ||
-    lower.includes("misrepresent") ||
-    lower.includes("unfair")
-  ) {
-    mood = "defensive";
-  } else if (
-    lower.includes("resigned") ||
-    lower.includes("inevitable") ||
-    lower.includes("nothing can be done") ||
-    lower.includes("weary")
-  ) {
-    mood = "resigned";
-  } else if (
-    lower.includes("calm") ||
-    lower.includes("measured") ||
-    lower.includes("consider") ||
-    lower.includes("reflect")
-  ) {
-    mood = "calm";
+  // Strip any of the structured lines we found (and a trailing blank line
+  // before them) from the spoken text.
+  let spokenText = rawTurnText
+    .replace(/^[ \t]*MOOD\s*:\s*[A-Za-z]+\s*$/gim, "")
+    .replace(/^[ \t]*CONVICTION\s*:\s*[0-9]*\.?[0-9]+\s*$/gim, "")
+    .replace(/^[ \t]*CONCEDE\s*:\s*[0-9]*\.?[0-9]+\s*$/gim, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  const clamp = (n: number): number => Math.max(0, Math.min(1, n));
+
+  const parsedMood = moodMatch?.[1]?.toLowerCase() as
+    | EmotionalStateShape["mood"]
+    | undefined;
+  const nextMood =
+    parsedMood && VALID_MOODS.includes(parsedMood)
+      ? parsedMood
+      : currentState.mood;
+
+  const convictionRaw = convictionMatch?.[1]
+    ? Number.parseFloat(convictionMatch[1])
+    : NaN;
+  const nextConviction = Number.isFinite(convictionRaw)
+    ? clamp(convictionRaw)
+    : currentState.convictionLevel;
+
+  const concedeRaw = concedeMatch?.[1]
+    ? Number.parseFloat(concedeMatch[1])
+    : NaN;
+  const nextConcede = Number.isFinite(concedeRaw)
+    ? clamp(concedeRaw)
+    : currentState.willingnessToConcede;
+
+  // Defensive: if parsing gave us nothing (model disobeyed the format
+  // entirely), also fall back to the raw text so we don't accidentally
+  // strip a legitimate line that happened to start with MOOD:.
+  if (!moodMatch && !convictionMatch && !concedeMatch) {
+    spokenText = rawTurnText.trim();
   }
 
-  // Conviction: increases if asserting, decreases if conceding
-  let convictionLevel = currentState.convictionLevel;
-  if (lower.includes("i am certain") || lower.includes("i know") || lower.includes("absolutely")) {
-    convictionLevel = Math.min(1.0, convictionLevel + 0.1);
-  } else if (lower.includes("perhaps") || lower.includes("i wonder") || lower.includes("maybe")) {
-    convictionLevel = Math.max(0.0, convictionLevel - 0.1);
-  }
-
-  // Willingness to concede: increases if acknowledging other views
-  let willingnessToConcede = currentState.willingnessToConcede;
-  if (
-    lower.includes("you make a fair point") ||
-    lower.includes("i concede") ||
-    lower.includes("you are right about")
-  ) {
-    willingnessToConcede = Math.min(1.0, willingnessToConcede + 0.15);
-  } else if (lower.includes("i refuse") || lower.includes("i will not concede")) {
-    willingnessToConcede = Math.max(0.0, willingnessToConcede - 0.15);
-  }
-
-  return { mood, convictionLevel, willingnessToConcede };
+  return {
+    spokenText,
+    nextState: {
+      mood: nextMood,
+      convictionLevel: nextConviction,
+      willingnessToConcede: nextConcede,
+    },
+  };
 }
 
 // ─── Main action ──────────────────────────────────────────────────────────────
@@ -475,13 +485,19 @@ export const generatePersonaTurn = internalAction({
       return { success: false, error: "Failed to generate dialogue turn" };
     }
 
+    // ── Parse the structured MOOD / CONVICTION / CONCEDE suffix ──────────────
+    // The prompt requires the model to append these lines; we use them as the
+    // authoritative emotional-state update and strip them from the spoken text.
+    const { spokenText, nextState: newEmotionalState } =
+      parseEmotionalStateFromTurn(agentState.emotionalState, generatedText);
+
     // ── Persist turn (Req 7.4, 13.2, 21.1) ───────────────────────────────────
     const turnId = await ctx.runMutation(internal.sessionMutations.persistDialogueTurn, {
       sessionId: args.sessionId,
       branchId: args.branchId,
       speakerId: args.personaId,
       speakerName: persona.name,
-      text: generatedText,
+      text: spokenText,
       turnIndex: nextTurnIndex,
       articleReferences: persona.articleReferences.slice(0, 3),
       emotionalStateSnapshot: agentState.emotionalState,
@@ -489,12 +505,9 @@ export const generatePersonaTurn = internalAction({
       depthLevel: session.depthLevel,
     });
 
-    // ── Update emotional state (Req 21.1, 21.4) ───────────────────────────────
-    const newEmotionalState = inferEmotionalStateUpdate(agentState.emotionalState, generatedText);
-
     const newContextMessage = {
       role: "assistant" as const,
-      content: generatedText,
+      content: spokenText,
       personaId: args.personaId,
       turnIndex: nextTurnIndex,
     };

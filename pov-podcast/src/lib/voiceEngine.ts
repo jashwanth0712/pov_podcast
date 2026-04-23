@@ -207,6 +207,8 @@ export async function transcribeSpeech(
 export class VoiceEngine {
   private audioContext: AudioContext | null = null;
   private currentSource: AudioBufferSourceNode | null = null;
+  private analyser: AnalyserNode | null = null;
+  private analyserBuffer: Uint8Array<ArrayBuffer> | null = null;
 
   /** Map of buffer key → pre-fetched MP3 bytes. */
   private synthesisQueue: Map<string, Promise<ArrayBuffer>> = new Map();
@@ -218,11 +220,46 @@ export class VoiceEngine {
   private getAudioContext(): AudioContext {
     if (!this.audioContext || this.audioContext.state === "closed") {
       this.audioContext = new AudioContext();
+      this.analyser = null;
+      this.analyserBuffer = null;
     }
     if (this.audioContext.state === "suspended") {
       void this.audioContext.resume();
     }
     return this.audioContext;
+  }
+
+  private getAnalyser(): AnalyserNode {
+    const ctx = this.getAudioContext();
+    if (!this.analyser) {
+      this.analyser = ctx.createAnalyser();
+      this.analyser.fftSize = 1024;
+      this.analyser.smoothingTimeConstant = 0.6;
+      this.analyserBuffer = new Uint8Array(
+        new ArrayBuffer(this.analyser.fftSize)
+      );
+    }
+    return this.analyser;
+  }
+
+  /**
+   * Instantaneous normalised RMS amplitude in [0, 1] of the currently playing
+   * audio. Returns 0 when nothing is playing. Designed to be polled from a
+   * requestAnimationFrame loop — cheap, no allocations per call.
+   */
+  getAmplitude(): number {
+    if (!this.currentSource || !this.analyser || !this.analyserBuffer) return 0;
+    this.analyser.getByteTimeDomainData(this.analyserBuffer);
+    let sumSquares = 0;
+    const n = this.analyserBuffer.length;
+    for (let i = 0; i < n; i++) {
+      // Samples are uint8 centred at 128. Normalise to [-1, 1].
+      const v = (this.analyserBuffer[i] - 128) / 128;
+      sumSquares += v * v;
+    }
+    const rms = Math.sqrt(sumSquares / n);
+    // Typical speech RMS sits around 0.05–0.25. Scale to feel lively.
+    return Math.min(1, rms * 3);
   }
 
   // ── Fetch MP3 from server-side proxy ──────────────────────────────────────
@@ -288,7 +325,11 @@ export class VoiceEngine {
     return new Promise<void>((resolve) => {
       const source = ctx.createBufferSource();
       source.buffer = audioBuffer;
-      source.connect(ctx.destination);
+      const analyser = this.getAnalyser();
+      // source → analyser → destination. Analyser is a pass-through so audio
+      // is unchanged, but we can sample its time-domain data each frame.
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
       this.currentSource = source;
 
       source.onended = () => {
