@@ -15,7 +15,18 @@ export interface AmbientAudioControlsProps {
     sfxCount: number;
     musicBufferLoaded: boolean;
     audioContextState: string;
+    graph?: {
+      masterGain: number;
+      muteGain: number;
+      musicGain: number;
+      musicSourceActive: boolean;
+      ducked: boolean;
+    };
   };
+  /** Play a test beep directly to the destination (bypasses ambient graph). */
+  onTestTone?: () => void;
+  /** Raw music URL for HTMLAudioElement fallback playback (bypasses Web Audio). */
+  musicUrlForElement?: string | null;
 }
 
 /**
@@ -32,6 +43,8 @@ export function AmbientAudioControls({
   onSfxVolumeChange,
   onMuteToggle,
   status,
+  onTestTone,
+  musicUrlForElement,
 }: AmbientAudioControlsProps) {
   const musicPct = Math.round(musicVolume * 100);
   const sfxPct = Math.round(sfxVolume * 100);
@@ -73,6 +86,39 @@ export function AmbientAudioControls({
           </div>
           <div>sfx clips: {status.sfxCount}</div>
           <div>audio ctx: {status.audioContextState}</div>
+          {status.graph && (
+            <>
+              <div>
+                gains → master:{status.graph.masterGain.toFixed(2)} mute:
+                {status.graph.muteGain.toFixed(2)} music:
+                {status.graph.musicGain.toFixed(2)}
+              </div>
+              <div>
+                music source: {status.graph.musicSourceActive ? "live" : "none"}
+                {status.graph.ducked && " · DUCKED"}
+              </div>
+            </>
+          )}
+          <div className="mt-1 flex flex-wrap gap-1">
+            {onTestTone && (
+              <button
+                type="button"
+                onClick={onTestTone}
+                className="rounded border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] text-white/80 hover:bg-white/20"
+              >
+                Test tone (Web Audio)
+              </button>
+            )}
+            {musicUrlForElement && (
+              <audio
+                src={musicUrlForElement}
+                controls
+                loop
+                className="mt-1 h-6 w-full"
+                aria-label="Raw music playback fallback"
+              />
+            )}
+          </div>
         </div>
       )}
 

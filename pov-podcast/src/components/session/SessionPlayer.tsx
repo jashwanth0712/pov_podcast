@@ -1061,6 +1061,32 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
     });
   }, [updateAmbientPreferences]);
 
+  // Poll the engine's graph state on a short interval so the status panel
+  // reflects ctx.currentTime-driven gain values in near-real-time.
+  const [graphState, setGraphState] = useState<{
+    masterGain: number;
+    muteGain: number;
+    musicGain: number;
+    musicSourceActive: boolean;
+    ducked: boolean;
+  } | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const id = setInterval(() => {
+      const g = ambientEngineRef.current?.getGraphState();
+      if (g) {
+        setGraphState({
+          masterGain: g.masterGain,
+          muteGain: g.muteGain,
+          musicGain: g.musicGain,
+          musicSourceActive: g.musicSourceActive,
+          ducked: g.ducked,
+        });
+      }
+    }, 500);
+    return () => clearInterval(id);
+  }, []);
+
   const ambientStatus = useMemo(
     () => ({
       musicUrlPresent: !!ambientUrls?.musicUrl,
@@ -1072,9 +1098,14 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
         (typeof window !== "undefined" &&
           voiceEngineRef.current?.ensureAudioContext().state) ||
         "uninitialised",
+      graph: graphState ?? undefined,
     }),
-    [ambientUrls, ambientLoaded]
+    [ambientUrls, ambientLoaded, graphState]
   );
+
+  const handleTestTone = useCallback(() => {
+    ambientEngineRef.current?.playTestTone();
+  }, []);
 
   const ambientControls: AmbientControlsState = useMemo(
     () => ({
@@ -1085,6 +1116,8 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
       onSfxVolumeChange: handleSfxVolumeChange,
       onMuteToggle: handleMuteToggle,
       status: ambientStatus,
+      onTestTone: handleTestTone,
+      musicUrlForElement: musicUrl,
     }),
     [
       ambientMusicVolume,
@@ -1094,6 +1127,8 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
       handleSfxVolumeChange,
       handleMuteToggle,
       ambientStatus,
+      handleTestTone,
+      musicUrl,
     ]
   );
 

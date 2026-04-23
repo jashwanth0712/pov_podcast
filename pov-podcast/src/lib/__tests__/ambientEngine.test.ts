@@ -92,14 +92,11 @@ describe("AmbientEngine — core behaviours", () => {
     expect(engine.getMusicVolume()).toBe(0.4);
   });
 
-  it("pause() suspends and resume() restores the AudioContext", async () => {
-    await engine.pause();
-    expect(ctx.suspend).toHaveBeenCalled();
-    expect(ctx.state).toBe("suspended");
-
-    await engine.resume();
-    expect(ctx.resume).toHaveBeenCalled();
-    expect(ctx.state).toBe("running");
+  it("pause() and resume() are safe no-ops when no music element exists", async () => {
+    // With HTMLAudioElement-based playback, pause/resume just call
+    // element.pause()/.play(). Without an element, they should not throw.
+    await expect(engine.pause()).resolves.toBeUndefined();
+    await expect(engine.resume()).resolves.toBeUndefined();
   });
 
   it("dispose() is idempotent and safe", () => {

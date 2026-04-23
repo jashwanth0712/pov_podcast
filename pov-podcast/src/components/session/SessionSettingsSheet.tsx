@@ -22,7 +22,16 @@ export interface AmbientControlsState {
     sfxCount: number;
     musicBufferLoaded: boolean;
     audioContextState: string;
+    graph?: {
+      masterGain: number;
+      muteGain: number;
+      musicGain: number;
+      musicSourceActive: boolean;
+      ducked: boolean;
+    };
   };
+  onTestTone?: () => void;
+  musicUrlForElement?: string | null;
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -200,6 +209,8 @@ function SettingsTab({ sessionId, ambientControls }: SettingsTabProps) {
           onSfxVolumeChange={ambientControls.onSfxVolumeChange}
           onMuteToggle={ambientControls.onMuteToggle}
           status={ambientControls.status}
+          onTestTone={ambientControls.onTestTone}
+          musicUrlForElement={ambientControls.musicUrlForElement}
         />
       )}
 
