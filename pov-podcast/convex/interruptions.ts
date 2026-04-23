@@ -128,11 +128,9 @@ export const submitInterruption = action({
     );
 
     // ── 6. Determine turn index on new branch ─────────────────────────────────
-    // The new branch starts from the fork point. The user's message is turn 0
-    // on the new branch (relative to the fork point), but we use the absolute
-    // turn index from the fork point for consistency with the branch's own sequence.
-    // Since the new branch is empty, the user turn is at index 0.
-    const userTurnIndex = 0;
+    // The new branch now contains a copy of parent turns up through
+    // forkPointTurnIndex, so the user's interruption appends right after.
+    const userTurnIndex = args.turnIndex + 1;
 
     // ── 7. Persist user turn + update activeBranchId (Req 5.4, 5.5) ──────────
     await ctx.runMutation(internal.interruptionHelpers.persistUserInterruptionTurn, {

@@ -40,6 +40,21 @@ export const createInterruptionBranch = internalMutation({
       isPruned: false,
     });
 
+    const parentTurns = await ctx.db
+      .query("dialogueTurns")
+      .withIndex("by_branchId_turnIndex", (q) =>
+        q.eq("branchId", parentBranchId)
+      )
+      .collect();
+
+    for (const turn of parentTurns) {
+      if (turn.turnIndex > args.forkPointTurnIndex) continue;
+      const { _id, _creationTime, ...rest } = turn;
+      void _id;
+      void _creationTime;
+      await ctx.db.insert("dialogueTurns", { ...rest, branchId: newBranchId });
+    }
+
     const parentStates = await ctx.db
       .query("personaAgentStates")
       .withIndex("by_sessionId_branchId", (q) =>

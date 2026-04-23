@@ -240,6 +240,33 @@ export const orchestrateTurn = internalAction({
         triggerReason: "deadlock detected — same ideological positions repeated ≥3 times",
       });
 
+      // After the moderator breaks deadlock, schedule a fresh round of
+      // persona turns so playback continues without the frontend needing
+      // to poll for more. Pick a persona that wasn't the last speaker so
+      // we pivot away from the repeating ideological pair.
+      const personaIds = session.personaIds.map((id) => String(id));
+      if (personaIds.length > 0) {
+        const pivotCandidates = personaIds.filter((id) => id !== lastSpeakerId);
+        const pool = pivotCandidates.length > 0 ? pivotCandidates : personaIds;
+        const pivotIndex = Math.floor(Math.random() * pool.length);
+        const pivotSpeakerId = pool[pivotIndex] as Id<"personas">;
+
+        const lookaheadCount = Math.min(3, personaIds.length);
+        const startIndex = personaIds.indexOf(pivotSpeakerId);
+        for (let i = 0; i < lookaheadCount; i++) {
+          const idx = (startIndex + i) % personaIds.length;
+          await ctx.scheduler.runAfter(
+            i * 100,
+            internal.generatePersonaTurn.generatePersonaTurn,
+            {
+              sessionId: args.sessionId,
+              personaId: personaIds[idx] as Id<"personas">,
+              branchId,
+            }
+          );
+        }
+      }
+
       return { success: true, deadlockDetected: true };
     }
 

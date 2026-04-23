@@ -841,6 +841,7 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
   }, [authToken]);
 
   const requestNextTurn = useAction(api.orchestrateTurn.requestNextTurn);
+  const submitInterruption = useAction(api.interruptions.submitInterruption);
 
   const voiceEngineRef = useRef<VoiceEngine | null>(null);
   if (voiceEngineRef.current === null && typeof window !== "undefined") {
@@ -849,6 +850,8 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
 
   const playedTurnIdsRef = useRef<Set<string>>(new Set());
   const isPlayingRef = useRef(false);
+  const nextTurnInFlightRef = useRef(false);
+  const lastPrefetchTurnCountRef = useRef(0);
   const [currentSpeakingPersonaId, setCurrentSpeakingPersonaId] =
     useState<Id<"personas"> | null>(null);
   const [currentCaption, setCurrentCaption] = useState<{
@@ -877,6 +880,29 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
   const sessionStatusRef = useRef(session?.status);
   sessionStatusRef.current = session?.status;
 
+  const handleSubmitInterruption = useCallback(
+    async (text: string) => {
+      voiceEngineRef.current?.stopPlayback();
+      voiceEngineRef.current?.clearBuffer();
+      isPlayingRef.current = false;
+      setCurrentSpeakingPersonaId(null);
+      setCurrentCaption(null);
+
+      const turnCount = liveTurnsRef.current?.length ?? 0;
+      const forkPointTurnIndex = Math.max(0, turnCount - 1);
+
+      const result = await submitInterruption({
+        sessionId,
+        text,
+        turnIndex: forkPointTurnIndex,
+      });
+      if (!result.success) {
+        throw new Error(result.error ?? "Interruption failed");
+      }
+    },
+    [submitInterruption, sessionId]
+  );
+
   // Effect: whenever the turn list changes, play any new turns we haven't
   // played yet. A ref guard prevents overlapping playbacks. After all queued
   // turns finish playing, trigger the next orchestrateTurn.
@@ -885,6 +911,73 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
     if (session?.status !== "active") return;
     if (!voiceEngineRef.current) return;
 
+    // Resolve voiceId, voiceParams, and spokenText for a turn. Returns null
+    // if the turn isn't playable yet (e.g. personas still loading) or is a
+    // non-spoken turn (user interruption, empty after stripping directions).
+    const resolveVoiceFor = (
+      turn: { _id: string; speakerId: string; speakerName?: string; text: string }
+    ): {
+      voiceId: string;
+      voiceParams: ReturnType<typeof mapEmotionalStateToVoiceParams>;
+      spokenText: string;
+      captionSpeakerName: string;
+      isModerator: boolean;
+    } | null => {
+      if (turn.speakerId === "user") return null;
+      const isModerator = turn.speakerId === "moderator";
+      const persona = !isModerator
+        ? personasRef.current?.find((p) => p._id === turn.speakerId)
+        : undefined;
+      const voiceId = isModerator ? MODERATOR_VOICE_ID : persona?.voiceId;
+      if (!voiceId) return null;
+
+      const state = !isModerator
+        ? personaStatesRef.current?.find((s) => s.personaId === turn.speakerId)
+            ?.emotionalState
+        : undefined;
+      const voiceParams = mapEmotionalStateToVoiceParams(
+        state ?? { mood: "calm", convictionLevel: 0.7, willingnessToConcede: 0.5 }
+      );
+
+      const spokenText = stripStageDirections(turn.text);
+      if (!spokenText) return null;
+
+      const captionSpeakerName = isModerator
+        ? "Moderator"
+        : personasRef.current?.find((p) => p._id === turn.speakerId)?.name ??
+          turn.speakerName ??
+          "";
+
+      return { voiceId, voiceParams, spokenText, captionSpeakerName, isModerator };
+    };
+
+    const PREFETCH_THRESHOLD = 2;
+
+    // dedupe=true: only fire if turn count has advanced since the last request.
+    // Used for mid-playback prefetch to avoid spamming the orchestrator on
+    // every render tick. dedupe=false: always fire (modulo in-flight). Used
+    // when the queue is fully drained — we MUST retry, because the previous
+    // orchestration may have failed silently (generatePersonaTurn returning
+    // success:false without persisting, or the deadlock branch skipping the
+    // lookahead schedule).
+    const triggerOrchestration = (turnsLength: number, dedupe: boolean) => {
+      if (nextTurnInFlightRef.current) return;
+      if (sessionStatusRef.current !== "active") return;
+      if (dedupe && turnsLength <= lastPrefetchTurnCountRef.current) return;
+      nextTurnInFlightRef.current = true;
+      lastPrefetchTurnCountRef.current = turnsLength;
+      void requestNextTurn({ sessionId })
+        .catch(() => {
+          // non-fatal; allow a retry on the next opportunity
+          lastPrefetchTurnCountRef.current = 0;
+        })
+        .finally(() => {
+          nextTurnInFlightRef.current = false;
+          // Kick playback in case new turns arrived while we were waiting.
+          void tryPlayNext();
+        });
+    };
+
     const tryPlayNext = async () => {
       if (isPlayingRef.current) return;
       if (sessionStatusRef.current !== "active") return;
@@ -892,17 +985,29 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
       if (!engine) return;
 
       const turns = liveTurnsRef.current ?? [];
-      const next = turns.find((t) => !playedTurnIdsRef.current.has(t._id));
+      const nextIndex = turns.findIndex(
+        (t) => !playedTurnIdsRef.current.has(t._id)
+      );
+      const next = nextIndex >= 0 ? turns[nextIndex] : undefined;
       if (!next) {
         // No unplayed turns — request the next one from the orchestrator.
-        if (turns.length > 0 && !isPlayingRef.current) {
-          try {
-            await requestNextTurn({ sessionId });
-          } catch {
-            // non-fatal; the UI will retry when new turns arrive
-          }
+        // This is the hard-stop fallback: bypass the dedup guard so we
+        // always retry even if the previous orchestration silently produced
+        // no new turns (e.g. LLM failure, deadlock branch skipping lookaheads).
+        if (turns.length > 0) {
+          triggerOrchestration(turns.length, false);
         }
         return;
+      }
+
+      // Prefetch the next iteration while we still have some runway. The
+      // orchestrator writes turns into the same liveTurns subscription, and
+      // the in-iteration prebuffer loop below will pick them up during the
+      // last turn of the current iteration — collapsing the cross-iteration
+      // silence gap.
+      const remainingUnplayed = turns.length - nextIndex;
+      if (remainingUnplayed <= PREFETCH_THRESHOLD) {
+        triggerOrchestration(turns.length, true);
       }
 
       // Skip TTS for user turns (the user already "spoke" them).
@@ -912,42 +1017,37 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
         return;
       }
 
-      const isModerator = next.speakerId === "moderator";
-      const persona = !isModerator
-        ? personasRef.current?.find((p) => p._id === next.speakerId)
-        : undefined;
-      const voiceId = isModerator
-        ? MODERATOR_VOICE_ID
-        : persona?.voiceId;
-
-      if (!voiceId) {
-        // No voice id available yet (personas still loading) — wait.
+      const resolved = resolveVoiceFor(next);
+      if (!resolved) {
+        // Personas still loading, or nothing to speak — wait / skip.
+        if (stripStageDirections(next.text) === "") {
+          playedTurnIdsRef.current.add(next._id);
+          void tryPlayNext();
+        }
         return;
       }
-
-      const state = !isModerator
-        ? personaStatesRef.current?.find((s) => s.personaId === next.speakerId)
-            ?.emotionalState
-        : undefined;
-      const voiceParams = mapEmotionalStateToVoiceParams(
-        state ?? { mood: "calm", convictionLevel: 0.7, willingnessToConcede: 0.5 }
-      );
+      const { voiceId, voiceParams, spokenText, captionSpeakerName, isModerator } =
+        resolved;
 
       isPlayingRef.current = true;
       playedTurnIdsRef.current.add(next._id);
 
-      const spokenText = stripStageDirections(next.text);
-      if (!spokenText) {
-        isPlayingRef.current = false;
-        void tryPlayNext();
-        return;
+      // Prebuffer the following unplayed, playable turn's audio under the cover
+      // of this turn's playback. Lookahead text is already persisted, so this
+      // collapses the usual inter-turn TTS gap to ~0.
+      for (let i = nextIndex + 1; i < turns.length; i++) {
+        const upcoming = turns[i];
+        if (playedTurnIdsRef.current.has(upcoming._id)) continue;
+        if (upcoming.speakerId === "user") continue;
+        const upcomingResolved = resolveVoiceFor(upcoming);
+        if (!upcomingResolved) continue;
+        engine.bufferNextTurn(
+          upcomingResolved.voiceId,
+          upcomingResolved.voiceParams,
+          upcomingResolved.spokenText
+        );
+        break;
       }
-
-      const captionSpeakerName = isModerator
-        ? "Moderator"
-        : personasRef.current?.find((p) => p._id === next.speakerId)?.name ??
-          next.speakerName ??
-          "";
 
       await engine.playTurn(voiceId, voiceParams, spokenText, {
         onPlaybackStarted: () => {
@@ -981,11 +1081,25 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
   useEffect(() => {
     if (session?.status !== "active") {
       voiceEngineRef.current?.stopPlayback();
+      voiceEngineRef.current?.clearBuffer();
       isPlayingRef.current = false;
       setCurrentSpeakingPersonaId(null);
       setCurrentCaption(null);
     }
   }, [session?.status]);
+
+  // Branch switch (e.g. user interruption creates a new branch): stop the
+  // current turn, drop any prebuffered audio, and reset played-turn tracking
+  // so the new branch's turns play cleanly from the fork point.
+  useEffect(() => {
+    if (!activeBranchId) return;
+    voiceEngineRef.current?.stopPlayback();
+    voiceEngineRef.current?.clearBuffer();
+    isPlayingRef.current = false;
+    playedTurnIdsRef.current = new Set();
+    setCurrentSpeakingPersonaId(null);
+    setCurrentCaption(null);
+  }, [activeBranchId]);
 
   // Build merged persona list with emotional state data
   const personasWithState: PersonaWithState[] = (personas ?? []).map((persona) => {
@@ -1171,6 +1285,7 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
             // Return focus to the transcript toggle button when panel closes
             transcriptToggleRef.current?.focus();
           }}
+          onSubmitInterruption={handleSubmitInterruption}
           preservedTurns={preservedTurns ?? undefined}
         />
       )}
