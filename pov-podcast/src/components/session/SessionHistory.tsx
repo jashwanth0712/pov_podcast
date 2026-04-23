@@ -139,7 +139,7 @@ export function SessionHistory() {
         scenarioTitle: string;
         lastActivityAt: number;
         status: "active" | "paused" | "completed";
-        activeBranchId: string;
+        activeBranchId?: string;
       }) => {
         const badge = STATUS_BADGE[session.status];
         return (

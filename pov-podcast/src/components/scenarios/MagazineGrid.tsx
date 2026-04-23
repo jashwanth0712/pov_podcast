@@ -79,74 +79,89 @@ function ScenarioCardWithPersonas({
  * - Banner images use next/image with lazy loading (handled in ScenarioCard)
  * - Scenario detail routes are prefetched on card hover (handled in ScenarioCard)
  */
-export function MagazineGrid({ scenarios, onSelect, isPending = false }: MagazineGridProps) {
-  if (scenarios.length === 0) return null;
-
+function MagazineBlock({
+  scenarios,
+  onSelect,
+}: {
+  scenarios: ScenarioDoc[];
+  onSelect?: (id: Id<"scenarios">) => void;
+}) {
   const [featured, secondary, ...rest] = scenarios;
   const bottomCards = rest.slice(0, 3);
 
   return (
-    <div
-      className={`transition-opacity duration-200 ${isPending ? "opacity-60" : "opacity-100"}`}
-      aria-live="polite"
-      aria-busy={isPending}
-    >
-      {/* Magazine layout - fixed grid matching reference */}
-      <div className="grid grid-cols-3 gap-4" style={{ gridTemplateRows: "1fr auto" }}>
-        {/* Top row */}
-        <div className="col-span-3 grid grid-cols-3 gap-4" style={{ height: "400px" }}>
-          {/* Featured large card - spans 2 cols */}
-          {featured && (
-            <div className="col-span-2 h-full">
-              <Suspense fallback={<CardSkeleton size="large" className="h-full" />}>
-                <ScenarioCardWithPersonas
-                  scenario={featured}
-                  onSelect={onSelect}
-                  size="large"
-                  className="h-full"
-                />
-              </Suspense>
-            </div>
-          )}
-
-          {/* Secondary medium card */}
-          {secondary && (
-            <div className="col-span-1 h-full">
-              <Suspense fallback={<CardSkeleton size="medium" className="h-full" />}>
-                <ScenarioCardWithPersonas
-                  scenario={secondary}
-                  onSelect={onSelect}
-                  size="medium"
-                  className="h-full"
-                />
-              </Suspense>
-            </div>
-          )}
-        </div>
-
-        {/* Bottom row - 3 small cards */}
-        {bottomCards.length > 0 && (
-          <div className="col-span-3 grid grid-cols-3 gap-4" style={{ height: "180px" }}>
-            {bottomCards.map((scenario) => (
-              <div key={scenario._id} className="h-full">
-                <Suspense fallback={<CardSkeleton size="small" className="h-full" />}>
-                  <ScenarioCardWithPersonas
-                    scenario={scenario}
-                    onSelect={onSelect}
-                    size="small"
-                    className="h-full"
-                  />
-                </Suspense>
-              </div>
-            ))}
-            {/* Fill empty slots if less than 3 cards */}
-            {bottomCards.length < 3 &&
-              Array.from({ length: 3 - bottomCards.length }).map((_, i) => (
-                <div key={`empty-${i}`} className="h-full" />
-              ))}
+    <div className="grid grid-cols-3 gap-4" style={{ gridTemplateRows: "1fr auto" }}>
+      {/* Top row */}
+      <div className="col-span-3 grid grid-cols-3 gap-4" style={{ height: "400px" }}>
+        {featured && (
+          <div className="col-span-2 h-full">
+            <Suspense fallback={<CardSkeleton size="large" className="h-full" />}>
+              <ScenarioCardWithPersonas
+                scenario={featured}
+                onSelect={onSelect}
+                size="large"
+                className="h-full"
+              />
+            </Suspense>
+          </div>
+        )}
+        {secondary && (
+          <div className="col-span-1 h-full">
+            <Suspense fallback={<CardSkeleton size="medium" className="h-full" />}>
+              <ScenarioCardWithPersonas
+                scenario={secondary}
+                onSelect={onSelect}
+                size="medium"
+                className="h-full"
+              />
+            </Suspense>
           </div>
         )}
       </div>
+
+      {/* Bottom row - up to 3 small cards */}
+      {bottomCards.length > 0 && (
+        <div className="col-span-3 grid grid-cols-3 gap-4" style={{ height: "180px" }}>
+          {bottomCards.map((scenario) => (
+            <div key={scenario._id} className="h-full">
+              <Suspense fallback={<CardSkeleton size="small" className="h-full" />}>
+                <ScenarioCardWithPersonas
+                  scenario={scenario}
+                  onSelect={onSelect}
+                  size="small"
+                  className="h-full"
+                />
+              </Suspense>
+            </div>
+          ))}
+          {bottomCards.length < 3 &&
+            Array.from({ length: 3 - bottomCards.length }).map((_, i) => (
+              <div key={`empty-${i}`} className="h-full" />
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function MagazineGrid({ scenarios, onSelect, isPending = false }: MagazineGridProps) {
+  if (scenarios.length === 0) return null;
+
+  // Chunk scenarios into groups of 5 (1 featured + 1 secondary + 3 bottom)
+  const chunks: ScenarioDoc[][] = [];
+  for (let i = 0; i < scenarios.length; i += 5) {
+    chunks.push(scenarios.slice(i, i + 5));
+  }
+
+  return (
+    <div
+      className={`space-y-8 transition-opacity duration-200 ${isPending ? "opacity-60" : "opacity-100"}`}
+      aria-live="polite"
+      aria-busy={isPending}
+    >
+      {chunks.map((chunk, index) => (
+        <MagazineBlock key={index} scenarios={chunk} onSelect={onSelect} />
+      ))}
     </div>
   );
 }

@@ -102,25 +102,26 @@ export const getGenerationContext = internalAction({
   },
   handler: async (ctx, args): Promise<GenerationContext | null> => {
     const [session, persona, agentState, recentTurns, relationships] = await Promise.all([
-      ctx.runQuery(internal.generatePersonaTurn.querySession, { sessionId: args.sessionId }),
-      ctx.runQuery(internal.generatePersonaTurn.queryPersona, { personaId: args.personaId }),
-      ctx.runQuery(internal.generatePersonaTurn.queryAgentState, {
+      ctx.runQuery(internal.generatePersonaTurnQueries.querySession, { sessionId: args.sessionId }),
+      ctx.runQuery(internal.generatePersonaTurnQueries.queryPersona, { personaId: args.personaId }),
+      ctx.runQuery(internal.generatePersonaTurnQueries.queryAgentState, {
         sessionId: args.sessionId,
         personaId: args.personaId,
         branchId: args.branchId,
       }),
-      ctx.runQuery(internal.generatePersonaTurn.queryRecentTurns, {
+      ctx.runQuery(internal.generatePersonaTurnQueries.queryRecentTurns, {
         branchId: args.branchId,
         limit: 20,
       }),
-      ctx.runQuery(internal.generatePersonaTurn.queryRelationships, {
-        scenarioId: (await ctx.runQuery(internal.generatePersonaTurn.querySession, {
+      ctx.runQuery(internal.generatePersonaTurnQueries.queryRelationships, {
+        scenarioId: (await ctx.runQuery(internal.generatePersonaTurnQueries.querySession, {
           sessionId: args.sessionId,
         }))!.scenarioId,
       }),
     ]);
 
     if (!session || !persona || !agentState) return null;
+    if (!session.activeBranchId) return null;
 
     const lastTurn = recentTurns[recentTurns.length - 1] ?? null;
     const lastSpeakerName = lastTurn?.speakerName ?? null;
@@ -138,70 +139,6 @@ export const getGenerationContext = internalAction({
       },
       nextTurnIndex,
     };
-  },
-});
-
-// ─── Internal queries (pure DB reads) ────────────────────────────────────────
-
-import { internalQuery } from "./_generated/server";
-
-export const querySession = internalQuery({
-  args: { sessionId: v.id("sessions") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.sessionId);
-  },
-});
-
-export const queryPersona = internalQuery({
-  args: { personaId: v.id("personas") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.personaId);
-  },
-});
-
-export const queryAgentState = internalQuery({
-  args: {
-    sessionId: v.id("sessions"),
-    personaId: v.id("personas"),
-    branchId: v.id("branches"),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("personaAgentStates")
-      .withIndex("by_sessionId_personaId", (q) =>
-        q.eq("sessionId", args.sessionId).eq("personaId", args.personaId)
-      )
-      .filter((q) => q.eq(q.field("branchId"), args.branchId))
-      .first();
-  },
-});
-
-export const queryRecentTurns = internalQuery({
-  args: { branchId: v.id("branches"), limit: v.number() },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("dialogueTurns")
-      .withIndex("by_branchId_turnIndex", (q) => q.eq("branchId", args.branchId))
-      .order("asc")
-      .collect();
-  },
-});
-
-export const queryRelationships = internalQuery({
-  args: { scenarioId: v.id("scenarios") },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("personaRelationships")
-      .withIndex("by_scenarioId", (q) => q.eq("scenarioId", args.scenarioId))
-      .collect();
-  },
-});
-
-export const queryScenarioPersonaIds = internalQuery({
-  args: { scenarioId: v.id("scenarios") },
-  handler: async (ctx, args) => {
-    const scenario = await ctx.db.get(args.scenarioId);
-    return scenario?.personaIds ?? [];
   },
 });
 
@@ -409,9 +346,9 @@ export const generatePersonaTurn = internalAction({
 
     // ── Load context ──────────────────────────────────────────────────────────
     const [session, persona, agentState] = await Promise.all([
-      ctx.runQuery(internal.generatePersonaTurn.querySession, { sessionId: args.sessionId }),
-      ctx.runQuery(internal.generatePersonaTurn.queryPersona, { personaId: args.personaId }),
-      ctx.runQuery(internal.generatePersonaTurn.queryAgentState, {
+      ctx.runQuery(internal.generatePersonaTurnQueries.querySession, { sessionId: args.sessionId }),
+      ctx.runQuery(internal.generatePersonaTurnQueries.queryPersona, { personaId: args.personaId }),
+      ctx.runQuery(internal.generatePersonaTurnQueries.queryAgentState, {
         sessionId: args.sessionId,
         personaId: args.personaId,
         branchId: args.branchId,
@@ -423,11 +360,11 @@ export const generatePersonaTurn = internalAction({
     if (!agentState) return { success: false, error: "Persona agent state not found" };
 
     const [recentTurns, relationships] = await Promise.all([
-      ctx.runQuery(internal.generatePersonaTurn.queryRecentTurns, {
+      ctx.runQuery(internal.generatePersonaTurnQueries.queryRecentTurns, {
         branchId: args.branchId,
         limit: 20,
       }),
-      ctx.runQuery(internal.generatePersonaTurn.queryRelationships, {
+      ctx.runQuery(internal.generatePersonaTurnQueries.queryRelationships, {
         scenarioId: session.scenarioId,
       }),
     ]);

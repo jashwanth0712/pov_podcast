@@ -1,5 +1,3 @@
-"use node";
-
 /**
  * transcribeSpeechHttp — Convex HTTP action.
  *

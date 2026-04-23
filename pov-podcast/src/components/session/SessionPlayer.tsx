@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
+import { useAuthToken } from "@convex-dev/auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { api } from "../../../convex/_generated/api";
@@ -10,6 +11,14 @@ import { ControlsBar } from "./ControlsBar";
 import { TranscriptPanel } from "./TranscriptPanel";
 import { ReconnectionBanner } from "./ReconnectionBanner";
 import { useConnectionStatus } from "../../hooks/useConnectionStatus";
+import {
+  VoiceEngine,
+  mapEmotionalStateToVoiceParams,
+  stripStageDirections,
+} from "../../lib/voiceEngine";
+
+// Default ElevenLabs voice id for moderator turns (Rachel — widely available).
+const MODERATOR_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -610,12 +619,144 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
     }
   }, [connectionStatus, liveTurns, preservedTurns]);
 
-  // Determine the currently speaking persona
-  // In a real session, this would come from the active dialogue turn.
-  // For now we derive it from the most recently updated persona agent state
-  // (the one that was last updated is likely the current speaker).
-  // The orchestrator will set this more precisely in later tasks.
-  const currentSpeakingPersonaId: Id<"personas"> | null = null; // Will be wired in 17.2
+  // ── Voice playback wiring ──────────────────────────────────────────────────
+  const authToken = useAuthToken();
+  const authTokenRef = useRef<string | null>(authToken);
+  useEffect(() => {
+    authTokenRef.current = authToken;
+  }, [authToken]);
+
+  const requestNextTurn = useAction(api.orchestrateTurn.requestNextTurn);
+
+  const voiceEngineRef = useRef<VoiceEngine | null>(null);
+  if (voiceEngineRef.current === null && typeof window !== "undefined") {
+    voiceEngineRef.current = new VoiceEngine(async () => authTokenRef.current);
+  }
+
+  const playedTurnIdsRef = useRef<Set<string>>(new Set());
+  const isPlayingRef = useRef(false);
+  const [currentSpeakingPersonaId, setCurrentSpeakingPersonaId] =
+    useState<Id<"personas"> | null>(null);
+  const [ttsError, setTtsError] = useState<string | null>(null);
+
+  // Dispose voice engine on unmount.
+  useEffect(() => {
+    return () => {
+      void voiceEngineRef.current?.dispose();
+      voiceEngineRef.current = null;
+    };
+  }, []);
+
+  // Refs for latest subscription data — keeps playback chain from reading
+  // stale closures after turns/personas arrive mid-playback.
+  const personasRef = useRef(personas);
+  personasRef.current = personas;
+  const personaStatesRef = useRef(personaStates);
+  personaStatesRef.current = personaStates;
+  const liveTurnsRef = useRef(liveTurns);
+  liveTurnsRef.current = liveTurns;
+  const sessionStatusRef = useRef(session?.status);
+  sessionStatusRef.current = session?.status;
+
+  // Effect: whenever the turn list changes, play any new turns we haven't
+  // played yet. A ref guard prevents overlapping playbacks. After all queued
+  // turns finish playing, trigger the next orchestrateTurn.
+  useEffect(() => {
+    if (!liveTurns) return;
+    if (session?.status !== "active") return;
+    if (!voiceEngineRef.current) return;
+
+    const tryPlayNext = async () => {
+      if (isPlayingRef.current) return;
+      if (sessionStatusRef.current !== "active") return;
+      const engine = voiceEngineRef.current;
+      if (!engine) return;
+
+      const turns = liveTurnsRef.current ?? [];
+      const next = turns.find((t) => !playedTurnIdsRef.current.has(t._id));
+      if (!next) {
+        // No unplayed turns — request the next one from the orchestrator.
+        if (turns.length > 0 && !isPlayingRef.current) {
+          try {
+            await requestNextTurn({ sessionId });
+          } catch {
+            // non-fatal; the UI will retry when new turns arrive
+          }
+        }
+        return;
+      }
+
+      // Skip TTS for user turns (the user already "spoke" them).
+      if (next.speakerId === "user") {
+        playedTurnIdsRef.current.add(next._id);
+        void tryPlayNext();
+        return;
+      }
+
+      const isModerator = next.speakerId === "moderator";
+      const persona = !isModerator
+        ? personasRef.current?.find((p) => p._id === next.speakerId)
+        : undefined;
+      const voiceId = isModerator
+        ? MODERATOR_VOICE_ID
+        : persona?.voiceId;
+
+      if (!voiceId) {
+        // No voice id available yet (personas still loading) — wait.
+        return;
+      }
+
+      const state = !isModerator
+        ? personaStatesRef.current?.find((s) => s.personaId === next.speakerId)
+            ?.emotionalState
+        : undefined;
+      const voiceParams = mapEmotionalStateToVoiceParams(
+        state ?? { mood: "calm", convictionLevel: 0.7, willingnessToConcede: 0.5 }
+      );
+
+      isPlayingRef.current = true;
+      playedTurnIdsRef.current.add(next._id);
+
+      const spokenText = stripStageDirections(next.text);
+      if (!spokenText) {
+        isPlayingRef.current = false;
+        void tryPlayNext();
+        return;
+      }
+
+      await engine.playTurn(voiceId, voiceParams, spokenText, {
+        onPlaybackStarted: () => {
+          if (!isModerator) {
+            setCurrentSpeakingPersonaId(next.speakerId as Id<"personas">);
+          } else {
+            setCurrentSpeakingPersonaId(null);
+          }
+        },
+        onPlaybackComplete: () => {
+          setCurrentSpeakingPersonaId(null);
+        },
+        onFallbackToTranscript: () => {
+          setTtsError("Voice playback failed — continuing as text only.");
+          setCurrentSpeakingPersonaId(null);
+        },
+      });
+
+      isPlayingRef.current = false;
+      // Chain to the next unplayed turn (or request a new one).
+      void tryPlayNext();
+    };
+
+    void tryPlayNext();
+  }, [liveTurns, session?.status, personas, personaStates, requestNextTurn, sessionId]);
+
+  // Stop playback if the session pauses.
+  useEffect(() => {
+    if (session?.status !== "active") {
+      voiceEngineRef.current?.stopPlayback();
+      isPlayingRef.current = false;
+      setCurrentSpeakingPersonaId(null);
+    }
+  }, [session?.status]);
 
   // Build merged persona list with emotional state data
   const personasWithState: PersonaWithState[] = (personas ?? []).map((persona) => {

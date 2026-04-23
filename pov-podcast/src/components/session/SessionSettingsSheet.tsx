@@ -74,7 +74,7 @@ function SettingsTab({ sessionId }: SettingsTabProps) {
 
   const switchTurnTakingMode = useMutation(api.sessions.switchTurnTakingMode);
   const updateDepthLevel = useMutation(api.sessions.updateDepthLevel);
-  const triggerModerator = useMutation(api.orchestrateTurn.triggerModerator);
+  const triggerModerator = useMutation(api.orchestrateMutations.triggerModerator);
 
   const [switchingMode, setSwitchingMode] = useState(false);
   const [switchingDepth, setSwitchingDepth] = useState(false);

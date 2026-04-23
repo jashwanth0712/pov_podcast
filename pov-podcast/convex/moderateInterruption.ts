@@ -11,7 +11,7 @@
  * Requirements: 25.1, 25.2, 25.3, 25.4, 25.5
  */
 
-import { internalAction, internalMutation } from "./_generated/server";
+import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { models } from "./lib/modelConfig";
@@ -81,27 +81,6 @@ function parseModerationResponse(raw: string): ModerationResult {
     reason: "Moderation response could not be parsed",
   };
 }
-
-// ─── Internal mutation: log rejected interruption ─────────────────────────────
-
-/**
- * Logs a rejected interruption to the `rejectedInterruptions` table.
- * Only stores sessionId, timestamp, and rejectionReason — NOT the full content
- * (Req 25.4).
- */
-export const logRejectedInterruption = internalMutation({
-  args: {
-    sessionId: v.id("sessions"),
-    rejectionReason: v.string(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.insert("rejectedInterruptions", {
-      sessionId: args.sessionId,
-      timestamp: Date.now(),
-      rejectionReason: args.rejectionReason,
-    });
-  },
-});
 
 // ─── Main action ──────────────────────────────────────────────────────────────
 
@@ -197,7 +176,7 @@ export const moderateInterruption = internalAction({
     if (result.classification === "UNSAFE") {
       // Fire-and-forget: log the rejection without blocking the response.
       // Full content (args.text) is intentionally NOT passed to the mutation.
-      await ctx.runMutation(internal.moderateInterruption.logRejectedInterruption, {
+      await ctx.runMutation(internal.moderationMutations.logRejectedInterruption, {
         sessionId: args.sessionId,
         rejectionReason: result.reason,
       });

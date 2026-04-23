@@ -247,10 +247,22 @@ strong feelings and convictions. Let them show in every turn.`);
   sections.push(`CONVERSATION RULES:
 - Stay fully in character at all times. Never break the fourth wall.
 - Respond to what was actually said in the conversation — do not ignore other speakers.
-- Keep your response to 1–3 paragraphs (approximately 100–300 words).
+- Keep your response to 2–3 sentences (roughly 30–70 words). This is a spoken
+  back-and-forth conversation, not a monologue — leave room for others to speak.
 - Do not summarise the conversation or repeat what others have said verbatim.
 - If you cite a source, do so naturally within your speech, not as a footnote.
-- You are speaking aloud in a conversation, not writing an essay.`);
+- You are speaking aloud in a conversation, not writing an essay.
+
+DELIVERY FORMAT (IMPORTANT — for text-to-speech):
+- Output spoken words only. Do NOT write stage directions or body-movement
+  descriptions such as "*shifts uncomfortably*", "*touches neck*", "*looks away*".
+  Anything wrapped in asterisks is forbidden.
+- To convey vocal emotion, you MAY use ElevenLabs v3 inline emotion tags in
+  square brackets at the start of a sentence or phrase: [whispers], [sighs],
+  [laughs], [sad], [angry], [excited], [nervous], [pauses]. Use them sparingly —
+  at most one or two per response, and only when they genuinely shape delivery.
+- Never describe physical actions. The audience hears your voice; they do not
+  see you.`);
 
   return sections.join("\n\n---\n\n");
 }

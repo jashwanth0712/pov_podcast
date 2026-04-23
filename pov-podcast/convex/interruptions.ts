@@ -17,8 +17,8 @@
  * Requirements: 5.4, 5.5, 5.6, 5.7
  */
 
-import { action, internalMutation, internalQuery } from "./_generated/server";
-import { ConvexError, v } from "convex/values";
+import { action } from "./_generated/server";
+import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 
@@ -47,124 +47,6 @@ function validateInterruptionInput(text: string): { valid: boolean; error?: stri
   }
   return { valid: true };
 }
-
-// ─── Internal query: load session for interruption ────────────────────────────
-
-export const querySessionForInterruption = internalQuery({
-  args: { sessionId: v.id("sessions") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.sessionId);
-  },
-});
-
-// ─── Internal mutation: create branch for interruption ───────────────────────
-
-/**
- * Creates a new branch forked from the current active branch at the given
- * turn index, and instantiates personaAgentStates for each persona on the
- * new branch (copying from the parent branch's current states).
- *
- * Returns the new branchId.
- *
- * Requirements: 5.4, 16.1, 16.2
- */
-export const createInterruptionBranch = internalMutation({
-  args: {
-    sessionId: v.id("sessions"),
-    forkPointTurnIndex: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const session = await ctx.db.get(args.sessionId);
-    if (!session) throw new ConvexError("Session not found.");
-
-    const now = Date.now();
-    const parentBranchId = session.activeBranchId;
-
-    // Create the new branch (Req 5.4, 16.1)
-    const newBranchId = await ctx.db.insert("branches", {
-      sessionId: args.sessionId,
-      parentBranchId,
-      forkPointTurnIndex: args.forkPointTurnIndex,
-      forkPointTurnId: undefined,
-      createdAt: now,
-      lastNavigatedAt: now, // mark as navigated immediately so it won't be auto-pruned
-      isPruned: false,
-    });
-
-    // Copy personaAgentStates from parent branch to new branch (Req 16.2, 21.8)
-    const parentStates = await ctx.db
-      .query("personaAgentStates")
-      .withIndex("by_sessionId_branchId", (q) =>
-        q.eq("sessionId", args.sessionId).eq("branchId", parentBranchId)
-      )
-      .collect();
-
-    for (const parentState of parentStates) {
-      await ctx.db.insert("personaAgentStates", {
-        sessionId: args.sessionId,
-        personaId: parentState.personaId,
-        branchId: newBranchId,
-        emotionalState: parentState.emotionalState,
-        contextMessages: parentState.contextMessages,
-        compactionSummaries: parentState.compactionSummaries,
-        messageCount: parentState.messageCount,
-        lastUpdatedAt: now,
-      });
-    }
-
-    return newBranchId;
-  },
-});
-
-// ─── Internal mutation: persist user interruption turn ───────────────────────
-
-/**
- * Persists the user's interruption as a dialogue turn on the new branch,
- * and updates the session's activeBranchId to the new branch.
- *
- * Requirements: 5.4, 5.5
- */
-export const persistUserInterruptionTurn = internalMutation({
-  args: {
-    sessionId: v.id("sessions"),
-    branchId: v.id("branches"),
-    text: v.string(),
-    turnIndex: v.number(),
-    depthLevel: v.union(
-      v.literal("Casual"),
-      v.literal("Intermediate"),
-      v.literal("Scholar")
-    ),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-
-    // Persist the user's message as a dialogue turn (Req 5.5)
-    const turnId = await ctx.db.insert("dialogueTurns", {
-      sessionId: args.sessionId,
-      branchId: args.branchId,
-      turnIndex: args.turnIndex,
-      speakerId: "user",
-      speakerName: "You",
-      text: args.text,
-      audioUrl: undefined,
-      timestamp: now,
-      articleReferences: [],
-      emotionalStateSnapshot: undefined,
-      qualityWarning: false,
-      isUserInterruption: true,
-      depthLevel: args.depthLevel,
-    });
-
-    // Update session's activeBranchId to the new branch (Req 5.4)
-    await ctx.db.patch(args.sessionId, {
-      activeBranchId: args.branchId,
-      lastActivityAt: now,
-    });
-
-    return turnId;
-  },
-});
 
 // ─── Public action: submitInterruption ───────────────────────────────────────
 
@@ -206,7 +88,7 @@ export const submitInterruption = action({
 
     // ── 3. Load session ───────────────────────────────────────────────────────
     const session = await ctx.runQuery(
-      internal.interruptions.querySessionForInterruption,
+      internal.interruptionHelpers.querySessionForInterruption,
       { sessionId: args.sessionId }
     );
 
@@ -238,7 +120,7 @@ export const submitInterruption = action({
     // ── 5. Record fork point + create new branch (Req 5.4, 16.1) ─────────────
     // The fork point is the current turn index passed by the frontend.
     const newBranchId = await ctx.runMutation(
-      internal.interruptions.createInterruptionBranch,
+      internal.interruptionHelpers.createInterruptionBranch,
       {
         sessionId: args.sessionId,
         forkPointTurnIndex: args.turnIndex,
@@ -253,7 +135,7 @@ export const submitInterruption = action({
     const userTurnIndex = 0;
 
     // ── 7. Persist user turn + update activeBranchId (Req 5.4, 5.5) ──────────
-    await ctx.runMutation(internal.interruptions.persistUserInterruptionTurn, {
+    await ctx.runMutation(internal.interruptionHelpers.persistUserInterruptionTurn, {
       sessionId: args.sessionId,
       branchId: newBranchId,
       text: args.text,

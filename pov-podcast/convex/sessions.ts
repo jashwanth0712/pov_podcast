@@ -41,28 +41,22 @@ export const startSession = mutation({
     const now = Date.now();
     const turnTakingMode = args.turnTakingMode ?? "Relevance"; // Default: Relevance (Req 14.10)
 
-    // We need a placeholder branchId to create the session first, then update it.
-    // Create the session record with a temporary activeBranchId that we'll update.
-    // Convex doesn't support forward references, so we create the branch first.
+    // sessions.activeBranchId and branches.sessionId reference each other, so we
+    // insert the session first (activeBranchId omitted), then the root branch,
+    // then patch the session with the real branchId.
+    const sessionId = await ctx.db.insert("sessions", {
+      userId,
+      scenarioId: args.scenarioId,
+      status: "active",
+      depthLevel: args.depthLevel,
+      turnTakingMode,
+      createdAt: now,
+      lastActivityAt: now,
+      roundRobinIndex: 0,
+    });
 
-    // Create a temporary session ID placeholder — we insert session then branch,
-    // then patch session with the branch ID.
-    // Step 1: Insert session with a self-referencing workaround:
-    // We insert the branch after the session, so we need to insert session first
-    // with a dummy approach. Instead, insert branch referencing session after session.
-    // Since Convex requires activeBranchId at insert time, we use a two-step approach:
-    // insert session, insert branch referencing session, patch session with branchId.
-
-    // We need to create the session and root branch together.
-    // Convex requires activeBranchId at insert time, so we use a two-step approach:
-    // 1. Insert a temporary "placeholder" branch (no sessionId yet — we'll patch it)
-    // 2. Insert session referencing the placeholder branch
-    // 3. Patch the branch with the real sessionId
-
-    // Step 1: Insert a temporary root branch with a placeholder sessionId.
-    // We cast to satisfy the type checker; it is immediately corrected in step 3.
     const rootBranchId = await ctx.db.insert("branches", {
-      sessionId: "placeholder" as unknown as import("./_generated/dataModel").Id<"sessions">,
+      sessionId,
       parentBranchId: undefined,
       forkPointTurnIndex: undefined,
       forkPointTurnId: undefined,
@@ -71,21 +65,7 @@ export const startSession = mutation({
       isPruned: false,
     });
 
-    // Step 2: Insert session referencing the real rootBranchId
-    const sessionId = await ctx.db.insert("sessions", {
-      userId,
-      scenarioId: args.scenarioId,
-      status: "active",
-      depthLevel: args.depthLevel,
-      turnTakingMode,
-      activeBranchId: rootBranchId,
-      createdAt: now,
-      lastActivityAt: now,
-      roundRobinIndex: 0,
-    });
-
-    // Step 3: Patch the branch with the real sessionId
-    await ctx.db.patch(rootBranchId, { sessionId });
+    await ctx.db.patch(sessionId, { activeBranchId: rootBranchId });
 
     // Instantiate personaAgentStates for each persona with initial emotional state
     // (Req 3.3, 4.1)
@@ -107,6 +87,11 @@ export const startSession = mutation({
         lastUpdatedAt: now,
       });
     }
+
+    // Kick off the first dialogue turn so the session auto-starts.
+    await ctx.scheduler.runAfter(0, internal.orchestrateTurn.orchestrateTurn, {
+      sessionId,
+    });
 
     return { sessionId, rootBranchId };
   },

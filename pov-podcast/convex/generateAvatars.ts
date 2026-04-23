@@ -91,7 +91,6 @@ async function uploadToStorage(
 
 function buildProfilePrompt(
   persona: {
-    name: string;
     historicalRole: string;
     personalityTraits: string[];
     geographicOrigin: string;
@@ -103,7 +102,7 @@ function buildProfilePrompt(
   const traits = persona.personalityTraits.slice(0, 3).join(", ");
   const baseDescription = `${persona.gender}, approximately ${persona.estimatedAge} years old, from ${persona.geographicOrigin}`;
 
-  return `Portrait of ${persona.name}, a ${persona.historicalRole} from the ${era} era. ${baseDescription}. Expression reflecting personality: ${traits}. Historical portrait style, warm studio lighting, detailed face, period-appropriate attire, painterly digital art. Negative prompt: blurry, low-res, watermark, text, logo, distorted features, extra limbs, modern clothing, anachronistic elements`;
+  return `Portrait of a ${persona.historicalRole} from the ${era} era. ${baseDescription}. Expression reflecting personality: ${traits}. Historical portrait style, warm studio lighting, detailed face, period-appropriate attire, painterly digital art. Negative prompt: blurry, low-res, watermark, text, logo, distorted features, extra limbs, modern clothing, anachronistic elements`;
 }
 
 export const generateAvatars = action({
@@ -142,7 +141,6 @@ export const generateAvatars = action({
     try {
       const profilePrompt = buildProfilePrompt(
         {
-          name: persona.name,
           historicalRole: persona.historicalRole,
           personalityTraits: persona.personalityTraits,
           geographicOrigin: persona.geographicOrigin,
@@ -219,7 +217,6 @@ export const retryGenerateAvatars = action({
     try {
       const profilePrompt = buildProfilePrompt(
         {
-          name: persona.name,
           historicalRole: persona.historicalRole,
           personalityTraits: persona.personalityTraits,
           geographicOrigin: persona.geographicOrigin,

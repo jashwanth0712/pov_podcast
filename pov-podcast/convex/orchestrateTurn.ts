@@ -12,6 +12,7 @@
  */
 
 import { internalAction, action } from "./_generated/server";
+
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import {
@@ -26,66 +27,6 @@ import { models } from "./lib/modelConfig";
 import type { Id } from "./_generated/dataModel";
 
 // ─── Internal queries ─────────────────────────────────────────────────────────
-
-import { internalQuery, internalMutation } from "./_generated/server";
-
-export const querySessionForOrchestration = internalQuery({
-  args: { sessionId: v.id("sessions") },
-  handler: async (ctx, args) => {
-    const session = await ctx.db.get(args.sessionId);
-    if (!session) return null;
-
-    const scenario = await ctx.db.get(session.scenarioId);
-    return session ? { ...session, personaIds: scenario?.personaIds ?? [] } : null;
-  },
-});
-
-export const queryPersonaStatesForOrchestration = internalQuery({
-  args: { sessionId: v.id("sessions"), branchId: v.id("branches") },
-  handler: async (ctx, args) => {
-    const states = await ctx.db
-      .query("personaAgentStates")
-      .withIndex("by_sessionId_branchId", (q) =>
-        q.eq("sessionId", args.sessionId).eq("branchId", args.branchId)
-      )
-      .collect();
-
-    // Join with persona ideological position for scoring
-    const statesWithPersona = await Promise.all(
-      states.map(async (state) => {
-        const persona = await ctx.db.get(state.personaId);
-        return {
-          ...state,
-          ideologicalPosition: persona?.ideologicalPosition ?? "",
-          personaName: persona?.name ?? "Unknown",
-        };
-      })
-    );
-
-    return statesWithPersona;
-  },
-});
-
-export const queryRecentTurnsForOrchestration = internalQuery({
-  args: { branchId: v.id("branches"), limit: v.number() },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("dialogueTurns")
-      .withIndex("by_branchId_turnIndex", (q) => q.eq("branchId", args.branchId))
-      .order("desc")
-      .take(args.limit);
-  },
-});
-
-export const queryRelationshipsForOrchestration = internalQuery({
-  args: { scenarioId: v.id("scenarios") },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("personaRelationships")
-      .withIndex("by_scenarioId", (q) => q.eq("scenarioId", args.scenarioId))
-      .collect();
-  },
-});
 
 // ─── Moderator turn generation ────────────────────────────────────────────────
 
@@ -120,7 +61,7 @@ export const generateModeratorTurn = internalAction({
 
     // Load recent turns for context
     const recentTurns = await ctx.runQuery(
-      internal.orchestrateTurn.queryRecentTurnsForOrchestration,
+      internal.orchestrateQueries.queryRecentTurnsForOrchestration,
       { branchId: args.branchId, limit: 6 }
     );
 
@@ -186,13 +127,13 @@ export const generateModeratorTurn = internalAction({
 
     // Get session for depth level and turn index
     const session = await ctx.runQuery(
-      internal.orchestrateTurn.querySessionForOrchestration,
+      internal.orchestrateQueries.querySessionForOrchestration,
       { sessionId: args.sessionId }
     );
     if (!session) return { success: false, error: "Session not found" };
 
     const allTurns = await ctx.runQuery(
-      internal.orchestrateTurn.queryRecentTurnsForOrchestration,
+      internal.orchestrateQueries.queryRecentTurnsForOrchestration,
       { branchId: args.branchId, limit: 1000 }
     );
     const nextTurnIndex = allTurns.length;
@@ -212,39 +153,6 @@ export const generateModeratorTurn = internalAction({
     });
 
     return { success: true, turnId };
-  },
-});
-
-// ─── triggerModerator public mutation ─────────────────────────────────────────
-
-import { mutation } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
-
-/**
- * Records user intent to invoke the Moderator, then schedules the
- * generateModeratorTurn action.
- * Requirements: 17.4
- */
-export const triggerModerator = mutation({
-  args: {
-    sessionId: v.id("sessions"),
-    branchId: v.id("branches"),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated.");
-
-    const session = await ctx.db.get(args.sessionId);
-    if (!session || session.userId !== userId) throw new Error("Session not found.");
-    if (session.status !== "active") throw new Error("Session is not active.");
-
-    await ctx.scheduler.runAfter(0, internal.orchestrateTurn.generateModeratorTurn, {
-      sessionId: args.sessionId,
-      branchId: args.branchId,
-      triggerReason: "user-triggered",
-    });
-
-    return { success: true };
   },
 });
 
@@ -273,7 +181,7 @@ export const orchestrateTurn = internalAction({
   }> => {
     // ── Load session and context ──────────────────────────────────────────────
     const session = await ctx.runQuery(
-      internal.orchestrateTurn.querySessionForOrchestration,
+      internal.orchestrateQueries.querySessionForOrchestration,
       { sessionId: args.sessionId }
     );
 
@@ -283,17 +191,18 @@ export const orchestrateTurn = internalAction({
     }
 
     const branchId = session.activeBranchId;
+    if (!branchId) return { success: false, error: "Session has no active branch" };
 
     const [personaStates, recentTurnsDesc, relationships] = await Promise.all([
-      ctx.runQuery(internal.orchestrateTurn.queryPersonaStatesForOrchestration, {
+      ctx.runQuery(internal.orchestrateQueries.queryPersonaStatesForOrchestration, {
         sessionId: args.sessionId,
         branchId,
       }),
-      ctx.runQuery(internal.orchestrateTurn.queryRecentTurnsForOrchestration, {
+      ctx.runQuery(internal.orchestrateQueries.queryRecentTurnsForOrchestration, {
         branchId,
         limit: 10,
       }),
-      ctx.runQuery(internal.orchestrateTurn.queryRelationshipsForOrchestration, {
+      ctx.runQuery(internal.orchestrateQueries.queryRelationshipsForOrchestration, {
         scenarioId: session.scenarioId,
       }),
     ]);

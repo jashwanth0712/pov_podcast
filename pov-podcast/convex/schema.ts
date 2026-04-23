@@ -92,7 +92,7 @@ export default defineSchema({
       v.literal("RoundRobin"),
       v.literal("Random")
     ),
-    activeBranchId: v.id("branches"),
+    activeBranchId: v.optional(v.id("branches")),
     createdAt: v.number(),
     lastActivityAt: v.number(),
     roundRobinIndex: v.number(),

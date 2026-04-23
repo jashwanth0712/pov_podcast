@@ -21,6 +21,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { models } from "./lib/modelConfig";
 
+
 const COMPACTION_SYSTEM_PROMPT = `You are a conversation historian. Summarise the following conversation history into a structured summary that captures:
 1. Key events and turning points in the discussion
 2. The emotional arc of the speaker (how their mood and conviction evolved)
@@ -49,7 +50,7 @@ export const compactPersonaContext = internalAction({
 
     // Load current agent state
     const agentState = await ctx.runQuery(
-      internal.generatePersonaTurn.queryAgentState,
+      internal.generatePersonaTurnQueries.queryAgentState,
       {
         sessionId: args.sessionId,
         personaId: args.personaId,
@@ -122,7 +123,7 @@ export const compactPersonaContext = internalAction({
     }
 
     // Persist the compaction summary and replace the 20 raw messages (Req 23.4, 23.5)
-    await ctx.runMutation(internal.compactPersonaContext.persistCompaction, {
+    await ctx.runMutation(internal.compactionMutations.persistCompaction, {
       sessionId: args.sessionId,
       personaId: args.personaId,
       branchId: args.branchId,
@@ -135,54 +136,5 @@ export const compactPersonaContext = internalAction({
     });
 
     return { success: true };
-  },
-});
-
-import { internalMutation } from "./_generated/server";
-
-/**
- * Persists the compaction summary and replaces the compacted messages.
- * Requirements: 23.4, 23.5
- */
-export const persistCompaction = internalMutation({
-  args: {
-    sessionId: v.id("sessions"),
-    personaId: v.id("personas"),
-    branchId: v.id("branches"),
-    summary: v.string(),
-    coveredTurnRange: v.array(v.number()),
-    remainingMessages: v.array(
-      v.object({
-        role: v.union(v.literal("system"), v.literal("user"), v.literal("assistant")),
-        content: v.string(),
-        personaId: v.optional(v.id("personas")),
-        turnIndex: v.number(),
-      })
-    ),
-  },
-  handler: async (ctx, args) => {
-    const state = await ctx.db
-      .query("personaAgentStates")
-      .withIndex("by_sessionId_personaId", (q) =>
-        q.eq("sessionId", args.sessionId).eq("personaId", args.personaId)
-      )
-      .filter((q) => q.eq(q.field("branchId"), args.branchId))
-      .first();
-
-    if (!state) return;
-
-    const newSummary = {
-      summary: args.summary,
-      coveredTurnRange: args.coveredTurnRange,
-      generatedAt: Date.now(),
-      marker: "[COMPACTED HISTORY]" as const,
-    };
-
-    await ctx.db.patch(state._id, {
-      compactionSummaries: [...state.compactionSummaries, newSummary],
-      contextMessages: args.remainingMessages,
-      messageCount: args.remainingMessages.length,
-      lastUpdatedAt: Date.now(),
-    });
   },
 });

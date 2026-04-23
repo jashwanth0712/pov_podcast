@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { transcribeSpeech } from "../../lib/voiceEngine";
+import { transcribeSpeech, stripStageDirections } from "../../lib/voiceEngine";
 import { Sheet } from "../ui/Sheet";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -542,7 +542,7 @@ export function TranscriptPanel({
               {/* Turn entry */}
               <div
                 className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}
-                aria-label={`${turn.speakerName}: ${turn.text}`}
+                aria-label={`${turn.speakerName}: ${stripStageDirections(turn.text)}`}
               >
                 {/* Avatar */}
                 <div
@@ -585,7 +585,7 @@ export function TranscriptPanel({
                       ${turn.qualityWarning ? "border border-amber-500/30" : ""}
                     `}
                   >
-                    {turn.text}
+                    {stripStageDirections(turn.text)}
 
                     {/* Quality warning indicator */}
                     {turn.qualityWarning && (
