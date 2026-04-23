@@ -369,12 +369,15 @@ export const generatePersonaTurn = internalAction({
     if (!persona) return { success: false, error: "Persona not found" };
     if (!agentState) return { success: false, error: "Persona agent state not found" };
 
-    const [recentTurns, relationships] = await Promise.all([
+    const [recentTurns, relationships, scenarioTitle] = await Promise.all([
       ctx.runQuery(internal.generatePersonaTurnQueries.queryRecentTurns, {
         branchId: args.branchId,
         limit: 20,
       }),
       ctx.runQuery(internal.generatePersonaTurnQueries.queryRelationships, {
+        scenarioId: session.scenarioId,
+      }),
+      ctx.runQuery(internal.generatePersonaTurnQueries.queryScenarioTitle, {
         scenarioId: session.scenarioId,
       }),
     ]);
@@ -426,6 +429,7 @@ export const generatePersonaTurn = internalAction({
         emotionalState: agentState.emotionalState,
         precedingSpeakerName: lastTurn?.speakerName ?? undefined,
         precedingRelationship: precedingRelationshipForPrompt,
+        scenarioTitle,
       }
     );
 

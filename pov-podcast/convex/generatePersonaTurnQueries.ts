@@ -60,3 +60,11 @@ export const queryScenarioPersonaIds = internalQuery({
     return scenario?.personaIds ?? [];
   },
 });
+
+export const queryScenarioTitle = internalQuery({
+  args: { scenarioId: v.id("scenarios") },
+  handler: async (ctx, args) => {
+    const scenario = await ctx.db.get(args.scenarioId);
+    return scenario?.title ?? "";
+  },
+});

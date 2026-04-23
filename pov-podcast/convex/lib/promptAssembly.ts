@@ -57,6 +57,8 @@ export interface PersonaPromptInput {
 export interface PromptContext {
   depthLevel: DepthLevel;
   emotionalState: EmotionalState;
+  /** Scenario title — the single topic the conversation is co-authoring. */
+  scenarioTitle?: string;
   /** Name of the persona who spoke the preceding turn, if any */
   precedingSpeakerName?: string;
   /** Relationship between this persona and the preceding speaker, if any */
@@ -219,13 +221,40 @@ ${persona.ideologicalPosition}`);
 
   // ── Expressiveness instruction (Req 15.1) ─────────────────────────────────
   sections.push(`EXPRESSIVENESS REQUIREMENT:
-Every response you generate MUST contain at least one of the following:
-1. An emotional statement (expressing how you feel about what was said or what is happening)
-2. A reference to a personal struggle or lived experience from your backstory
-3. An ideological assertion (a clear statement of your beliefs, values, or political position)
+Your line must carry real feeling — through reaction, not recitation. Pick
+whichever fits the moment:
+- How you FEEL about what was just said (visceral, not analytical).
+- A shard of your lived experience that this last line pulled to the surface.
+- A belief of yours that the previous speaker just bumped against.
 
-Do NOT generate neutral, detached, or purely factual responses. You are a living person with
-strong feelings and convictions. Let them show in every turn.`);
+Do NOT generate neutral, detached, or purely factual responses. Equally, do
+NOT pitch your backstory in isolation — the previous line is the spark;
+your line is the reaction. Emotion is how you respond, not what you announce.`);
+
+  // ── Narrative continuity (CRITICAL for podcast flow) ─────────────────────
+  sections.push(`NARRATIVE CONTINUITY (CRITICAL):
+This is ONE story${context.scenarioTitle ? ` about "${context.scenarioTitle}"` : ""}, told in shards
+by different people who lived it. You are not giving a standalone
+testimony — you are co-authoring a single unfolding conversation with
+the other speakers.
+
+- ALWAYS build directly on the immediately previous line. Pick up an
+  image, a word, a number, a claim from what they just said and turn it.
+  Agree with it, push against it, complicate it, extend it, or expose
+  its blind spot — but never ignore it.
+- Your line should only make sense HERE, right after this last line. If
+  the same sentence could plausibly open the whole conversation, it is
+  wrong — rewrite it as a reply.
+- Name the previous speaker or echo a distinctive phrase of theirs when
+  it helps the baton feel passed. "Ralph's right about who got left
+  behind" is the shape to imitate — weave, don't restart.
+- Do NOT re-pitch your own backstory if you've already spoken earlier in
+  this session. Assume the listener remembers. Push the story forward
+  instead of reintroducing yourself.
+- Avoid generic declarations ("the space race was complex", "history is
+  written by the victors"). Specifics from the prior line beat abstractions.
+- The listener should feel a single thread being pulled tighter with
+  each turn, not a round-table of parallel monologues.`);
 
   // ── Depth level modifier (Req 19.3) ──────────────────────────────────────
   sections.push(DEPTH_LEVEL_INSTRUCTIONS[context.depthLevel]);
