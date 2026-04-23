@@ -267,9 +267,10 @@ DELIVERY FORMAT (IMPORTANT — for text-to-speech via ElevenLabs v3):
   square brackets, lowercase. Place them where a real speaker would do
   that thing — at the start of a line, between clauses, or before a
   charged word. Not all at the beginning.
-- Use AT MOST 1 audio tag per turn. Often use zero. A short crisp line
-  with one well-placed tag beats a line cluttered with them. Never more
-  than one in a single turn.
+- Use AT LEAST 1 audio tag per turn — this is mandatory. More is fine
+  when the emotion warrants it; there is no upper limit. What matters is
+  that every tag is well-placed (a real vocal cue, not decoration) rather
+  than stacked at the front of the line.
 - Audio tags ONLY influence voice delivery — they are not descriptions of
   actions. Prefer "[sighs] I saw it too" over any asterisk prose.
 - Never describe physical actions. The audience hears your voice; they do
@@ -312,8 +313,8 @@ MOOD: <one of: calm | frustrated | passionate | defensive | resigned>
 CONVICTION: <number between 0.0 and 1.0 — how firmly you hold your position right now>
 CONCEDE: <number between 0.0 and 1.0 — how willing you are to yield ground right now>
 
-Example of a complete response (note the length — two short sentences, one
-tag, tight and punchy):
+Example of a complete response (note the length — two short sentences with
+a placed audio tag, tight and punchy):
 [angry] That's not how it was on the ground. We weren't given a choice —
 we were given orders and a lie.
 
