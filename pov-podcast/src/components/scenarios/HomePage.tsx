@@ -7,6 +7,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { ScenarioDetailSheet } from "./ScenarioDetailSheet";
 import { MagazineGrid, MagazineGridSkeleton } from "./MagazineGrid";
+import { SessionHistory } from "../session/SessionHistory";
 import { useRouter } from "next/navigation";
 
 type Era = "All" | "Ancient" | "Medieval" | "Modern" | "Contemporary";
@@ -168,7 +169,7 @@ export function HomePage() {
               >
                 Historical Scenarios
               </h2>
-              <p className="text-sm text-white/50 mt-2">
+              <p className="text-sm text-white/60 mt-2">
                 Curated events — step into the perspectives that shaped history
               </p>
             </div>
@@ -209,7 +210,7 @@ export function HomePage() {
               role="status"
               aria-live="polite"
             >
-              <p className="text-white/50 text-sm">
+              <p className="text-white/60 text-sm">
                 No scenarios found for the &ldquo;{selectedEra}&rdquo; era.
               </p>
               <button
@@ -238,7 +239,7 @@ export function HomePage() {
               >
                 Your Scenarios
               </h2>
-              <p className="text-sm text-white/50 mt-2">
+              <p className="text-sm text-white/60 mt-2">
                 Scenarios you&apos;ve generated from your own topics
               </p>
             </div>
@@ -263,7 +264,7 @@ export function HomePage() {
               <h3 className="text-base font-semibold text-white">
                 Sign in to create and view your scenarios
               </h3>
-              <p className="mt-2 text-sm text-white/50 max-w-xs">
+              <p className="mt-2 text-sm text-white/60 max-w-xs">
                 Your custom scenarios are saved to your account.
               </p>
               <button
@@ -305,7 +306,7 @@ export function HomePage() {
               <h3 className="text-base font-semibold text-white">
                 No custom scenarios yet
               </h3>
-              <p className="mt-2 text-sm text-white/50 max-w-xs">
+              <p className="mt-2 text-sm text-white/60 max-w-xs">
                 Generate a scenario from any historical topic — a battle, a discovery, a social movement.
               </p>
               <button
@@ -325,6 +326,24 @@ export function HomePage() {
             <MagazineGrid scenarios={userScenarios} />
           )}
         </section>
+
+        {/* ── Session History section ── */}
+        {isAuthenticated && (
+          <section aria-labelledby="session-history-heading">
+            <div className="mb-6">
+              <h2
+                id="session-history-heading"
+                className="text-3xl font-bold text-white"
+              >
+                Your Sessions
+              </h2>
+              <p className="text-sm text-white/60 mt-2">
+                Pick up where you left off — sessions ordered by most recent activity
+              </p>
+            </div>
+            <SessionHistory />
+          </section>
+        )}
       </main>
 
       {/* Scenario detail sheet for pre-built scenarios */}

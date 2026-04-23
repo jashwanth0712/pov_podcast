@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { useConvexAuth } from "convex/react";
+import Image from "next/image";
 
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -128,6 +129,14 @@ export function ScenarioCard({
     }
   }, [router, id, isAuthenticated, onSelect]);
 
+  // Prefetch the session setup route on hover to reduce navigation latency (Req 10.1)
+  const handleMouseEnter = useCallback(() => {
+    if (!onSelect) {
+      const target = `/session/setup/${id}`;
+      router.prefetch(target);
+    }
+  }, [router, id, onSelect]);
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Enter" || e.key === " ") {
@@ -155,6 +164,7 @@ export function ScenarioCard({
       aria-label={`${title} — ${timePeriod}. Click to start session.`}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
+      onMouseEnter={handleMouseEnter}
       className={`
         group relative ${config.rounded} overflow-hidden cursor-pointer select-none
         border border-white/10 bg-zinc-900/50
@@ -167,11 +177,13 @@ export function ScenarioCard({
       {/* Background image */}
       <div className="absolute inset-0 bg-gradient-to-br from-zinc-700 to-zinc-900">
         {bannerImageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={bannerImageUrl}
             alt=""
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
           />
         )}
       </div>
@@ -194,11 +206,13 @@ export function ScenarioCard({
                 style={{ zIndex: visiblePersonas.length - i }}
               >
                 {persona.avatarGenerationStatus === "complete" && persona.profileImageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={persona.profileImageUrl}
                     alt={persona.name}
+                    width={36}
+                    height={36}
                     className={`${config.avatarSize} rounded-full object-cover ring-2 ring-white/20 shadow-lg`}
+                    loading="lazy"
                   />
                 ) : (
                   <div
@@ -237,17 +251,17 @@ export function ScenarioCard({
         </h3>
 
         {/* Time period */}
-        <p className="text-xs font-medium text-white/70">
+        <p className="text-xs font-medium text-white/80">
           {timePeriod}
         </p>
 
         {/* Description */}
-        <p className={`text-sm leading-relaxed text-white/60 ${config.descLines}`}>
+        <p className={`text-sm leading-relaxed text-white/70 ${config.descLines}`}>
           {displayDescription}
         </p>
 
         {/* Content disclaimer (Req 8.2) */}
-        <p className="text-[10px] leading-tight text-white/40 mt-1">
+        <p className="text-[10px] leading-tight text-white/50 mt-1">
           {contentDisclaimer}
         </p>
       </div>

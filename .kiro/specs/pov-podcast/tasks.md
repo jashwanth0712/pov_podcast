@@ -91,7 +91,7 @@ The following API keys are already set in the Convex deployment environment and 
     - Store profile and portrait image URLs in persona record; set `avatarGenerationStatus`
     - On failure: set status to `"failed"`, schedule background retry (exponential backoff: 1 min, 5 min, 30 min)
     - Read endpoint URL and model ID from environment variables
-    - See [RunPod API documentation](./runpod-api.md) for API format and prompt construction
+    - See [=\d API documentation](./runpod-api.md) for API format and prompt construction
     - _Requirements: 22.1, 22.2, 22.3, 22.5, 22.6_
 
   - [x] 5.5 Implement `ScenarioGenerator` multi-step component
@@ -272,20 +272,20 @@ The following API keys are already set in the Convex deployment environment and 
     - Continue generating turns on new branch influenced by user input
     - _Requirements: 5.4, 5.5, 5.6, 5.7_
 
-- [ ] 15. Voice input (STT)
-  - [ ] 15.1 Implement `VoiceEngine.transcribeSpeech` using ElevenLabs Scribe API
+- [x] 15. Voice input (STT)
+  - [x] 15.1 Implement `VoiceEngine.transcribeSpeech` using ElevenLabs Scribe API
     - `POST /v1/speech-to-text` with `model_id: "scribe_v1"`; populate interruption text field within 3 seconds
     - On error: display error message and retain text input field
     - **Use ElevenLabs Power** (Kiro skill) to learn STT API details and best practices
     - _Requirements: 6.1, 6.3, 6.4_
 
-  - [ ] 15.2 Implement voice input UI in interruption interface
+  - [x] 15.2 Implement voice input UI in interruption interface
     - Push-to-talk mic button; request microphone permission with explanation
     - Show recording indicator while capturing; disable voice input and show message if permission denied
     - _Requirements: 6.1, 6.2, 6.5, 6.6_
 
-- [ ] 16. Audio streaming (TTS)
-  - [ ] 16.1 Implement `VoiceEngine` TTS WebSocket service
+- [x] 16. Audio streaming (TTS)
+  - [x] 16.1 Implement `VoiceEngine` TTS WebSocket service
     - Connect to `wss://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream-input?model_id=eleven_flash_v2_5`
     - Send BOS message with voice settings, stream text chunks, send EOS; decode base64 audio chunks and feed to Web Audio API
     - Begin playback of first chunk within 2 seconds of stream opening
@@ -294,91 +294,91 @@ The following API keys are already set in the Convex deployment environment and 
     - **Use ElevenLabs Power** (Kiro skill) to learn TTS WebSocket streaming, voice settings, and voice ID selection
     - _Requirements: 3.2, 3.6, 3.8, 4.1, 4.5, 24.1, 24.2, 24.3, 24.4, 24.5, 24.6_
 
-  - [ ] 16.2 Implement emotional state → voice parameter mapping
+  - [x] 16.2 Implement emotional state → voice parameter mapping
     - Map mood to `VoiceParams`: calm → stability 0.75/style 0.2; frustrated → 0.35/0.8; passionate → 0.45/0.75; defensive → 0.55/0.6; resigned → 0.80/0.1
     - _Requirements: 21.5_
 
-  - [ ] 16.3 Write property test for emotional state to voice parameter mapping
+  - [x] 16.3 Write property test for emotional state to voice parameter mapping
     - **Property 5: Emotional State Mapping to Voice Parameters**
     - **Validates: Requirements 21.5**
 
-  - [ ] 16.4 Implement audio buffering
+  - [x] 16.4 Implement audio buffering
     - Buffer at least one synthesised audio turn ahead of playback
     - _Requirements: 10.2_
 
-- [ ] 17. Session player UI
-  - [ ] 17.1 Implement `SessionPlayer` with `StageArea` and `PersonaGrid`
+- [x] 17. Session player UI
+  - [x] 17.1 Implement `SessionPlayer` with `StageArea` and `PersonaGrid`
     - Large avatar (~120px) of currently speaking persona with animated pulsing coloured ring, name, role, and emotional state badge
     - Responsive 4-column grid of all other personas (~64px avatars) with per-avatar speaking ring activation; user's own avatar labelled "You"
     - Tapping a persona avatar shows popover with "Force speak next" option (wired to `forceNextSpeaker` mutation)
     - Display initials-based fallback avatar when `avatarGenerationStatus !== "complete"`
     - _Requirements: 3.7, 4.2, 14.7, 15.7, 17.7, 21.7, 22.4_
 
-  - [ ] 17.2 Implement `ControlsBar` with PTT mic, participants, settings, and transcript toggle
+  - [x] 17.2 Implement `ControlsBar` with PTT mic, participants, settings, and transcript toggle
     - Turn-taking mode selector and depth level switcher in `SessionSettingsSheet`
     - Moderator trigger button (wired to `triggerModerator` mutation, generates turn within 5 seconds)
     - Relationship map and source map views in `SessionSettingsSheet`
     - _Requirements: 14.5, 14.6, 14.7, 17.4, 18.4, 20.4_
 
-  - [ ] 17.3 Implement `TranscriptPanel` bottom sheet
+  - [x] 17.3 Implement `TranscriptPanel` bottom sheet
     - Unified transcript + chat: per-message avatar, speaker name + role + timestamp, text, inline citation chips (open URL in new tab), branch fork dividers
     - Text input bar (1–1000 chars) and PTT mic button
     - Scrollable at all times; attribute each turn to correct persona, "You", or "Moderator"
     - Display bias label "Cited by [Persona Name] — reflects their perspective" adjacent to every citation
     - _Requirements: 4.3, 5.9, 9.1, 13.3, 13.4, 13.5, 13.6, 18.2, 18.3_
 
-  - [ ] 17.4 Write property test for transcript completeness and attribution
+  - [x] 17.4 Write property test for transcript completeness and attribution
     - **Property 10: Transcript Completeness and Attribution**
     - **Validates: Requirements 4.3, 5.9, 9.1**
 
-  - [ ] 17.5 Write property test for article references in rendered turns
+  - [x] 17.5 Write property test for article references in rendered turns
     - **Property 11: Article References Appear in Rendered Turns**
     - **Validates: Requirements 13.3, 13.4**
 
-- [ ] 18. Session persistence and history
-  - [ ] 18.1 Implement `pauseSession`, `resumeSession`, and `endSession` mutations
+- [-] 18. Session persistence and history
+  - [x] 18.1 Implement `pauseSession`, `resumeSession`, and `endSession` mutations
     - Pause: stop playback immediately, preserve dialogue position
     - Resume: restore from preserved position within 1 second
     - End: mark as completed, block further turns
     - _Requirements: 4.7, 4.8, 7.5_
 
-  - [ ] 18.2 Implement `getUserSessions` query and `SessionHistory` component
+  - [x] 18.2 Implement `getUserSessions` query and `SessionHistory` component
     - List past sessions ordered by most recent activity; show scenario title and last-activity date
     - Clicking a session restores it to last saved state
     - _Requirements: 7.2, 7.3_
 
-  - [ ] 18.3 Implement connection interruption handling
+  - [x] 18.3 Implement connection interruption handling
     - Display reconnection indicator on Convex WebSocket disconnection
     - Retry every 5 seconds for up to 60 seconds; re-subscribe to all active queries on reconnect
     - After 60 seconds: display error and preserve transcript in local state
     - _Requirements: 10.3, 10.4_
 
-- [ ] 19. Checkpoint — Ensure all tests pass
+- [x] 19. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 20. Accessibility and performance
-  - [ ] 20.1 Implement keyboard navigation and ARIA labels
+- [x] 20. Accessibility and performance
+  - [x] 20.1 Implement keyboard navigation and ARIA labels
     - All interactive controls (play, pause, interrupt, submit) operable via keyboard alone
     - ARIA labels on all interactive controls and dynamic content regions
     - Update transcript and speaking indicator simultaneously when speaking persona changes
     - _Requirements: 9.2, 9.3, 9.5_
 
-  - [ ] 20.2 Implement colour contrast and visual compliance
+  - [x] 20.2 Implement colour contrast and visual compliance
     - Maintain ≥4.5:1 contrast ratio for all body text (WCAG 2.1 AA)
     - _Requirements: 9.4_
 
-  - [ ] 20.3 Implement home page performance optimisation
+  - [x] 20.3 Implement home page performance optimisation
     - Ensure home page (including scenario library) loads within 3 seconds on 10 Mbps connection
     - _Requirements: 10.1_
 
-- [ ] 21. Source map and relationship map
-  - [ ] 21.1 Implement source map view
+- [-] 21. Source map and relationship map
+  - [-] 21.1 Implement source map view
     - Collect all article references surfaced during a session; deduplicate and group by citing persona
     - Annotate each reference with ideological alignment relative to other sources in the map
     - On selection: display persona-generated explanation of why the source was cited
     - _Requirements: 13.5, 18.4, 18.5_
 
-  - [ ] 21.2 Implement relationship map view
+  - [-] 21.2 Implement relationship map view
     - Display all personas as nodes with pairwise relationship edges labelled by type (alliance, rivalry, mentor/student, ideological kinship, historical enmity)
     - _Requirements: 20.4_
 

@@ -246,7 +246,12 @@ export const getSession = query({
 });
 
 /**
- * Returns the user's session history ordered by most recent activity.
+ * Returns the user's session history ordered by most recent activity,
+ * joined with the scenario title for display.
+ *
+ * Returns an array of:
+ *   { sessionId, scenarioId, scenarioTitle, lastActivityAt, status, activeBranchId }
+ *
  * Requirements: 7.2, 7.3
  */
 export const getUserSessions = query({
@@ -261,7 +266,22 @@ export const getUserSessions = query({
       .order("desc")
       .collect();
 
-    return sessions;
+    // Join with scenarios to get the title for each session (Req 7.2)
+    const enriched = await Promise.all(
+      sessions.map(async (session) => {
+        const scenario = await ctx.db.get(session.scenarioId);
+        return {
+          sessionId: session._id,
+          scenarioId: session.scenarioId,
+          scenarioTitle: scenario?.title ?? "Unknown Scenario",
+          lastActivityAt: session.lastActivityAt,
+          status: session.status,
+          activeBranchId: session.activeBranchId,
+        };
+      })
+    );
+
+    return enriched;
   },
 });
 
