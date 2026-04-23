@@ -89,12 +89,15 @@ function MagazineBlock({
   const [featured, secondary, ...rest] = scenarios;
   const bottomCards = rest.slice(0, 3);
 
+  // On mobile we stack to a single column with intrinsic aspect ratios so
+  // cards never get vertically stretched into awkward thin rectangles. From
+  // sm: upward we restore the magazine layout with fixed pixel heights.
   return (
-    <div className="grid grid-cols-3 gap-4" style={{ gridTemplateRows: "1fr auto" }}>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       {/* Top row */}
-      <div className="col-span-3 grid grid-cols-3 gap-4" style={{ height: "400px" }}>
+      <div className="sm:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:h-[400px]">
         {featured && (
-          <div className="col-span-2 h-full">
+          <div className="sm:col-span-2 aspect-[4/3] sm:aspect-auto sm:h-full">
             <Suspense fallback={<CardSkeleton size="large" className="h-full" />}>
               <ScenarioCardWithPersonas
                 scenario={featured}
@@ -106,7 +109,7 @@ function MagazineBlock({
           </div>
         )}
         {secondary && (
-          <div className="col-span-1 h-full">
+          <div className="sm:col-span-1 aspect-[4/3] sm:aspect-auto sm:h-full">
             <Suspense fallback={<CardSkeleton size="medium" className="h-full" />}>
               <ScenarioCardWithPersonas
                 scenario={secondary}
@@ -121,9 +124,12 @@ function MagazineBlock({
 
       {/* Bottom row - up to 3 small cards */}
       {bottomCards.length > 0 && (
-        <div className="col-span-3 grid grid-cols-3 gap-4" style={{ height: "180px" }}>
+        <div className="sm:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-4 sm:h-[180px]">
           {bottomCards.map((scenario) => (
-            <div key={scenario._id} className="h-full">
+            <div
+              key={scenario._id}
+              className="aspect-[4/3] sm:aspect-auto sm:h-full"
+            >
               <Suspense fallback={<CardSkeleton size="small" className="h-full" />}>
                 <ScenarioCardWithPersonas
                   scenario={scenario}
@@ -136,7 +142,10 @@ function MagazineBlock({
           ))}
           {bottomCards.length < 3 &&
             Array.from({ length: 3 - bottomCards.length }).map((_, i) => (
-              <div key={`empty-${i}`} className="h-full" />
+              <div
+                key={`empty-${i}`}
+                className="hidden sm:block sm:h-full"
+              />
             ))}
         </div>
       )}
@@ -193,11 +202,11 @@ function CardSkeleton({
 
 export function MagazineGridSkeleton({ count = 5 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-3 gap-4" style={{ gridTemplateRows: "1fr auto" }}>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       {/* Top row */}
-      <div className="col-span-3 grid grid-cols-3 gap-4" style={{ height: "400px" }}>
+      <div className="sm:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:h-[400px]">
         {/* Featured skeleton */}
-        <div className="col-span-2 h-full">
+        <div className="sm:col-span-2 aspect-[4/3] sm:aspect-auto sm:h-full">
           <div
             className="animate-pulse h-full rounded-3xl border border-white/10 bg-white/5 overflow-hidden relative"
             aria-hidden="true"
@@ -220,7 +229,7 @@ export function MagazineGridSkeleton({ count = 5 }: { count?: number }) {
         </div>
 
         {/* Secondary skeleton */}
-        <div className="col-span-1 h-full">
+        <div className="sm:col-span-1 aspect-[4/3] sm:aspect-auto sm:h-full">
           <div
             className="animate-pulse h-full rounded-3xl border border-white/10 bg-white/5 overflow-hidden relative"
             aria-hidden="true"
@@ -238,9 +247,12 @@ export function MagazineGridSkeleton({ count = 5 }: { count?: number }) {
       </div>
 
       {/* Bottom row */}
-      <div className="col-span-3 grid grid-cols-3 gap-4" style={{ height: "180px" }}>
+      <div className="sm:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-4 sm:h-[180px]">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-full">
+          <div
+            key={i}
+            className={`aspect-[4/3] sm:aspect-auto sm:h-full ${i === 2 ? "hidden sm:block" : ""}`}
+          >
             <div
               className="animate-pulse h-full rounded-2xl border border-white/10 bg-white/5 overflow-hidden relative"
               aria-hidden="true"
