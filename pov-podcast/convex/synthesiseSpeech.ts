@@ -85,7 +85,7 @@ export const synthesiseSpeechHttp = httpAction(async (ctx, request) => {
     },
     body: JSON.stringify({
       text: body.text,
-      model_id: body.voiceParams.model_id ?? "eleven_flash_v2_5",
+      model_id: body.voiceParams.model_id ?? "eleven_v3",
       voice_settings: {
         stability: body.voiceParams.stability,
         similarity_boost: body.voiceParams.similarity_boost,

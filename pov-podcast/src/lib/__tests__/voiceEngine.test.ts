@@ -180,11 +180,11 @@ describe("Property 5: Emotional State Mapping to Voice Parameters", () => {
     );
   });
 
-  it("model_id is always 'eleven_flash_v2_5' regardless of mood (Req 21.5)", () => {
+  it("model_id is always 'eleven_v3' regardless of mood (Req 21.5)", () => {
     fc.assert(
       fc.property(emotionalStateArb, (state) => {
         const params = mapEmotionalStateToVoiceParams(state);
-        return params.model_id === "eleven_flash_v2_5";
+        return params.model_id === "eleven_v3";
       }),
       { numRuns: 100 }
     );

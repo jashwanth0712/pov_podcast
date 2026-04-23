@@ -29,12 +29,84 @@ export interface EmotionalState {
   willingnessToConcede: number;
 }
 
+/**
+ * ElevenLabs model id used for TTS.
+ *
+ * `eleven_v3` supports inline audio tags (see ELEVENLABS_AUDIO_TAGS below).
+ * Older models (`eleven_flash_v2_5`, `eleven_turbo_v2_5`,
+ * `eleven_multilingual_v2`) do NOT support audio tags — tags will be
+ * ignored or read aloud literally.
+ */
+export const TTS_MODEL_ID = "eleven_v3" as const;
+export type TtsModelId = typeof TTS_MODEL_ID;
+
 export interface VoiceParams {
   stability: number;
   similarity_boost: number;
   style: number;
-  model_id: "eleven_flash_v2_5";
+  model_id: TtsModelId;
 }
+
+/**
+ * Canonical list of ElevenLabs v3 inline audio tags. Feed this list into any
+ * prompt that generates spoken-text turns so the LLM can request vocal cues.
+ *
+ * Rules for use in turn text:
+ * - Wrap in square brackets, lowercase: `[whispers]`, `[sighs]`.
+ * - Place at the start of the sentence or phrase the cue applies to.
+ * - Use sparingly — at most one or two per short turn. Overuse degrades
+ *   quality.
+ * - Tags ONLY affect delivery; never describe physical actions with them.
+ *   Use `[sighs]` instead of `*sighs heavily*`.
+ *
+ * Source: ElevenLabs v3 audio-tag reference.
+ */
+export const ELEVENLABS_AUDIO_TAGS = {
+  emotions: [
+    "happy",
+    "sad",
+    "angry",
+    "excited",
+    "nervous",
+    "bored",
+    "sarcastic",
+    "curious",
+    "confused",
+    "surprised",
+    "disappointed",
+    "amused",
+    "defeated",
+    "hopeful",
+  ],
+  nonVerbal: [
+    "laughs",
+    "laughs harder",
+    "giggles",
+    "chuckles",
+    "sighs",
+    "exhales",
+    "gasps",
+    "crying",
+    "sobbing",
+    "screams",
+    "clears throat",
+    "coughs",
+    "sniffs",
+    "groans",
+  ],
+  delivery: [
+    "whispers",
+    "shouts",
+    "mumbles",
+    "stutters",
+    "sings",
+    "softly",
+    "quietly",
+    "loudly",
+    "strongly",
+  ],
+  pacing: ["pauses", "long pause", "hesitates"],
+} as const;
 
 export interface PlayTurnCallbacks {
   onPlaybackStarted?: () => void;
@@ -75,7 +147,7 @@ export function mapEmotionalStateToVoiceParams(state: EmotionalState): VoicePara
     stability,
     similarity_boost: 0.75,
     style,
-    model_id: "eleven_flash_v2_5",
+    model_id: TTS_MODEL_ID,
   };
 }
 

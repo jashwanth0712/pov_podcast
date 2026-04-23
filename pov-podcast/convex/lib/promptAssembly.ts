@@ -253,16 +253,31 @@ strong feelings and convictions. Let them show in every turn.`);
 - If you cite a source, do so naturally within your speech, not as a footnote.
 - You are speaking aloud in a conversation, not writing an essay.
 
-DELIVERY FORMAT (IMPORTANT — for text-to-speech):
+DELIVERY FORMAT (IMPORTANT — for text-to-speech via ElevenLabs v3):
 - Output spoken words only. Do NOT write stage directions or body-movement
   descriptions such as "*shifts uncomfortably*", "*touches neck*", "*looks away*".
   Anything wrapped in asterisks is forbidden.
-- To convey vocal emotion, you MAY use ElevenLabs v3 inline emotion tags in
-  square brackets at the start of a sentence or phrase: [whispers], [sighs],
-  [laughs], [sad], [angry], [excited], [nervous], [pauses]. Use them sparingly —
-  at most one or two per response, and only when they genuinely shape delivery.
-- Never describe physical actions. The audience hears your voice; they do not
-  see you.`);
+- To shape vocal delivery, you MAY use ElevenLabs v3 inline audio tags in
+  square brackets, lowercase, placed at the start of the sentence or phrase
+  they apply to.
+- Use AT MOST one or two tags per response, and only when they genuinely
+  change how the line is delivered. Overuse degrades quality.
+- Audio tags ONLY influence voice delivery — they are not descriptions of
+  actions. Prefer "[sighs] I saw it too" over any asterisk prose.
+- Never describe physical actions. The audience hears your voice; they do
+  not see you.
+
+Supported audio tags (use ONLY these; any other bracketed text will be read
+aloud verbatim):
+- Emotions: [happy], [sad], [angry], [excited], [nervous], [bored],
+  [sarcastic], [curious], [confused], [surprised], [disappointed],
+  [amused], [defeated], [hopeful]
+- Non-verbal sounds: [laughs], [laughs harder], [giggles], [chuckles],
+  [sighs], [exhales], [gasps], [crying], [sobbing], [screams],
+  [clears throat], [coughs], [sniffs], [groans]
+- Delivery style: [whispers], [shouts], [mumbles], [stutters], [sings],
+  [softly], [quietly], [loudly], [strongly]
+- Pacing: [pauses], [long pause], [hesitates]`);
 
   return sections.join("\n\n---\n\n");
 }
