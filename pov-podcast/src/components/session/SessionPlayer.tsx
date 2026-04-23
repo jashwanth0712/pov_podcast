@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { useAuthToken } from "@convex-dev/auth/react";
 import { useRouter } from "next/navigation";
@@ -96,6 +96,155 @@ function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+// ─── CaptionsOverlay ──────────────────────────────────────────────────────────
+
+interface CaptionsOverlayProps {
+  /** Whether the user has captions toggled on. */
+  visible: boolean;
+  /** The currently spoken caption (speaker + text) — null when silent. */
+  caption: { speakerName: string; text: string } | null;
+}
+
+/**
+ * Splits a full turn into short subtitle-style lines (≤ ~48 chars each),
+ * breaking on sentence boundaries first, then commas, then word boundaries.
+ */
+function chunkCaption(text: string, maxChars = 52): string[] {
+  const normalised = text.replace(/\s+/g, " ").trim();
+  if (!normalised) return [];
+
+  // Split into sentences, keeping their terminator.
+  const sentences = normalised.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [normalised];
+  const chunks: string[] = [];
+
+  const wrapOnWords = (s: string): string[] => {
+    const out: string[] = [];
+    let line = "";
+    for (const w of s.split(" ")) {
+      const candidate = line ? `${line} ${w}` : w;
+      if (candidate.length <= maxChars) {
+        line = candidate;
+      } else {
+        if (line) out.push(line);
+        line = w;
+      }
+    }
+    if (line) out.push(line);
+    return out;
+  };
+
+  for (const raw of sentences.map((s) => s.trim()).filter(Boolean)) {
+    if (raw.length <= maxChars) {
+      chunks.push(raw);
+      continue;
+    }
+    // Prefer comma splits for mid-sentence pauses.
+    const parts = raw.split(/,\s*/).filter(Boolean);
+    let line = "";
+    for (let i = 0; i < parts.length; i++) {
+      const piece = i < parts.length - 1 ? `${parts[i]},` : parts[i];
+      const candidate = line ? `${line} ${piece}` : piece;
+      if (candidate.length <= maxChars) {
+        line = candidate;
+      } else {
+        if (line) chunks.push(line);
+        if (piece.length <= maxChars) {
+          line = piece;
+        } else {
+          // Fall through to word-wrap for this oversize piece.
+          const wrapped = wrapOnWords(piece);
+          chunks.push(...wrapped.slice(0, -1));
+          line = wrapped[wrapped.length - 1] ?? "";
+        }
+      }
+    }
+    if (line) chunks.push(line);
+  }
+
+  return chunks;
+}
+
+/**
+ * CaptionsOverlay — subtitle-style live captions.
+ *
+ * The turn's text is chunked into short lines (≤ ~52 chars, breaking on
+ * sentence / comma / word boundaries), then cycled one at a time with a
+ * duration proportional to the chunk's word count (~170 WPM). Styling is
+ * minimal — no chrome, just white serif text with a strong drop-shadow so
+ * it stays legible over any background, movie-subtitle style.
+ */
+function CaptionsOverlay({ visible, caption }: CaptionsOverlayProps) {
+  const chunks = useMemo(
+    () => (caption ? chunkCaption(caption.text) : []),
+    [caption]
+  );
+
+  const [chunkIndex, setChunkIndex] = useState(0);
+
+  // Reset + schedule line advances whenever a new turn arrives.
+  useEffect(() => {
+    setChunkIndex(0);
+    if (chunks.length <= 1) return;
+
+    const WORDS_PER_SECOND = 2.8; // ~170 WPM
+    const MIN_MS = 1400;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    let elapsedMs = 0;
+
+    for (let i = 0; i < chunks.length - 1; i++) {
+      const words = chunks[i].split(/\s+/).length;
+      const durationMs = Math.max(MIN_MS, (words / WORDS_PER_SECOND) * 1000);
+      elapsedMs += durationMs;
+      const nextIndex = i + 1;
+      timers.push(
+        setTimeout(() => setChunkIndex(nextIndex), elapsedMs)
+      );
+    }
+
+    return () => {
+      for (const t of timers) clearTimeout(t);
+    };
+  }, [chunks]);
+
+  const show = visible && caption !== null && chunks.length > 0;
+  const currentLine = chunks[chunkIndex] ?? "";
+
+  return (
+    <div
+      className={`
+        pointer-events-none fixed inset-x-0 bottom-[132px] z-20 flex flex-col items-center
+        px-6 transition-opacity duration-300
+        ${show ? "opacity-100" : "opacity-0"}
+      `}
+      aria-hidden={!show}
+    >
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="flex flex-col items-center gap-1.5 max-w-3xl text-center"
+      >
+        {caption && (
+          <span className="text-[10px] uppercase tracking-[0.22em] text-white/45 font-medium [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">
+            {caption.speakerName}
+          </span>
+        )}
+        <p
+          key={`${caption?.speakerName ?? ""}-${chunkIndex}`}
+          className="
+            font-serif text-white/95
+            text-[19px] md:text-[22px] leading-snug tracking-wide
+            [text-shadow:0_2px_8px_rgba(0,0,0,0.95),0_0_2px_rgba(0,0,0,0.9)]
+            transition-opacity duration-200
+          "
+        >
+          {currentLine}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 // ─── StageArea ────────────────────────────────────────────────────────────────
@@ -702,6 +851,11 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
   const isPlayingRef = useRef(false);
   const [currentSpeakingPersonaId, setCurrentSpeakingPersonaId] =
     useState<Id<"personas"> | null>(null);
+  const [currentCaption, setCurrentCaption] = useState<{
+    speakerName: string;
+    text: string;
+  } | null>(null);
+  const [captionsEnabled, setCaptionsEnabled] = useState(false);
   const [ttsError, setTtsError] = useState<string | null>(null);
 
   // Dispose voice engine on unmount.
@@ -789,6 +943,12 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
         return;
       }
 
+      const captionSpeakerName = isModerator
+        ? "Moderator"
+        : personasRef.current?.find((p) => p._id === next.speakerId)?.name ??
+          next.speakerName ??
+          "";
+
       await engine.playTurn(voiceId, voiceParams, spokenText, {
         onPlaybackStarted: () => {
           if (!isModerator) {
@@ -796,13 +956,16 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
           } else {
             setCurrentSpeakingPersonaId(null);
           }
+          setCurrentCaption({ speakerName: captionSpeakerName, text: spokenText });
         },
         onPlaybackComplete: () => {
           setCurrentSpeakingPersonaId(null);
+          setCurrentCaption(null);
         },
         onFallbackToTranscript: () => {
           setTtsError("Voice playback failed — continuing as text only.");
           setCurrentSpeakingPersonaId(null);
+          setCurrentCaption(null);
         },
       });
 
@@ -820,6 +983,7 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
       voiceEngineRef.current?.stopPlayback();
       isPlayingRef.current = false;
       setCurrentSpeakingPersonaId(null);
+      setCurrentCaption(null);
     }
   }, [session?.status]);
 
@@ -974,6 +1138,12 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
         <div className="h-6" aria-hidden="true" />
       </main>
 
+      {/* Live captions — floats above the controls bar */}
+      <CaptionsOverlay
+        visible={captionsEnabled}
+        caption={currentCaption}
+      />
+
       {/* Controls bar */}
       <div className="flex-shrink-0 sticky bottom-0">
         <ControlsBar
@@ -985,6 +1155,8 @@ export function SessionPlayer({ sessionId }: SessionPlayerProps) {
           }}
           unreadCount={unreadCount}
           transcriptToggleRef={transcriptToggleRef}
+          captionsEnabled={captionsEnabled}
+          onCaptionsToggle={() => setCaptionsEnabled((prev) => !prev)}
         />
       </div>
 

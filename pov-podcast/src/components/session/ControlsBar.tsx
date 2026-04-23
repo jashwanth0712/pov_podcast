@@ -21,6 +21,10 @@ interface ControlsBarProps {
   authToken?: string;
   /** Ref forwarded to the transcript toggle button for focus management. */
   transcriptToggleRef?: React.RefObject<HTMLButtonElement | null>;
+  /** Whether live captions are currently being rendered. */
+  captionsEnabled?: boolean;
+  /** Toggle live captions on/off. */
+  onCaptionsToggle?: () => void;
 }
 
 // ─── MicIcon ──────────────────────────────────────────────────────────────────
@@ -98,6 +102,33 @@ function SettingsIcon({ className }: { className?: string }) {
   );
 }
 
+// ─── CaptionsIcon ─────────────────────────────────────────────────────────────
+
+function CaptionsIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+      aria-hidden="true"
+    >
+      <rect x="3" y="5" width="18" height="14" rx="2.5" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8.5 10.5a2 2 0 00-3 1.6v.3a2 2 0 003 1.7"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M17 10.5a2 2 0 00-3 1.6v.3a2 2 0 003 1.7"
+      />
+    </svg>
+  );
+}
+
 // ─── ChatIcon ─────────────────────────────────────────────────────────────────
 
 function ChatIcon({ className }: { className?: string }) {
@@ -137,6 +168,8 @@ export function ControlsBar({
   unreadCount = 0,
   authToken,
   transcriptToggleRef,
+  captionsEnabled = false,
+  onCaptionsToggle,
 }: ControlsBarProps) {
   const [participantsOpen, setParticipantsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -269,6 +302,39 @@ export function ControlsBar({
           </div>
           <span className="text-[10px] font-medium">Settings</span>
         </button>
+
+        {/* Captions toggle */}
+        {onCaptionsToggle && (
+          <button
+            type="button"
+            onClick={onCaptionsToggle}
+            className={`
+              flex flex-col items-center gap-1
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 rounded-lg p-1
+              transition-colors
+              ${captionsEnabled ? "text-purple-400" : "text-white/70 hover:text-white/90"}
+            `}
+            aria-label={captionsEnabled ? "Turn off captions" : "Turn on captions"}
+            aria-pressed={captionsEnabled}
+          >
+            <div
+              className={`
+                h-10 w-10 rounded-full flex items-center justify-center
+                border transition-colors
+                ${
+                  captionsEnabled
+                    ? "bg-purple-500/20 border-purple-500/40"
+                    : "bg-white/5 border-white/10 hover:bg-white/10"
+                }
+              `}
+            >
+              <CaptionsIcon className="h-5 w-5" />
+            </div>
+            <span className="text-[10px] font-medium">
+              {captionsEnabled ? "On" : "Captions"}
+            </span>
+          </button>
+        )}
 
         {/* Transcript/chat toggle */}
         <button
