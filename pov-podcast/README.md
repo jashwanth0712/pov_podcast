@@ -10,27 +10,13 @@ Live at **[pov-podcast.vercel.app](https://pov-podcast-ibcpvgrix-jashwanth0712s-
 
 ## What we built
 
-```
-   ┌──────────────────────────────────────────────────────┐
-   │            Pick a moment in history                  │
-   │  ┌─────────┐  ┌──────────┐  ┌──────────────────┐     │
-   │  │ Hiroshima│  │Salt March│  │ Fall of Berlin Wall│   │
-   │  └─────────┘  └──────────┘  └──────────────────┘     │
-   └──────────────────────────────────────────────────────┘
-                          │
-                          ▼
-   ┌──────────────────────────────────────────────────────┐
-   │           You're in the room                         │
-   │                                                      │
-   │    (Oppenheimer) ──── (Groves) ──── (Truman)         │
-   │         │                                            │
-   │         └── real voices, real arguments, real time   │
-   │                                                      │
-   │          🎤  [ You: "But did you sleep?" ]           │
-   │                                                      │
-   │    They turn. They answer. In character, in voice.   │
-   └──────────────────────────────────────────────────────┘
-```
+**1. Pick a moment in history.** Browse curated scenarios — the Partition of India, Hiroshima, the Fall of Berlin, the Titanic — each with a cast of fully fleshed personas carrying their own emotional backstory, ideology, accent, and grief.
+
+![Scenario browser and persona detail](./public/screenshot-scenarios.png)
+
+**2. Step into the room.** You're placed at the table alongside the people who lived it — Armstrong on Apollo 11, Katherine Johnson running the numbers, Wernher von Braun watching his rockets fly. Hit *Request* to raise your hand. The room turns and answers you, in voice, in character.
+
+![Live session view](./public/screenshot-session.png)
 
 - **Multi-perspective AI personas** — each historical figure is a distinct agent with their own memory, worldview, and emotional state.
 - **Live voice + live interruption** — listen like a podcast, or hit the mic and talk back. They hear you, and the conversation bends around you.
