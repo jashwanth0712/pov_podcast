@@ -1,36 +1,156 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# POV Podcast
 
-## Getting Started
+> *"The true weight of history isn't in the facts. It's in the perspectives — and for the first time, you can step inside them."*
 
-First, run the development server:
+For centuries we've learned history the same way — one narrator, one timeline, one version of the truth. **POV Podcast** changes that: step into any moment and you're *in the room*, listening to the people who lived it argue in their own voices, in real time. It's history the way it actually happened — emotional, human, and told from every side at once.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Live at **[pov-podcast.vercel.app](https://pov-podcast-ibcpvgrix-jashwanth0712s-projects.vercel.app)** · Built for **#ElevenHacks** with **@elevenlabsio** and **@kirodotdev**.
+
+---
+
+## What we built
+
+```
+   ┌──────────────────────────────────────────────────────┐
+   │            Pick a moment in history                  │
+   │  ┌─────────┐  ┌──────────┐  ┌──────────────────┐     │
+   │  │ Hiroshima│  │Salt March│  │ Fall of Berlin Wall│   │
+   │  └─────────┘  └──────────┘  └──────────────────┘     │
+   └──────────────────────────────────────────────────────┘
+                          │
+                          ▼
+   ┌──────────────────────────────────────────────────────┐
+   │           You're in the room                         │
+   │                                                      │
+   │    (Oppenheimer) ──── (Groves) ──── (Truman)         │
+   │         │                                            │
+   │         └── real voices, real arguments, real time   │
+   │                                                      │
+   │          🎤  [ You: "But did you sleep?" ]           │
+   │                                                      │
+   │    They turn. They answer. In character, in voice.   │
+   └──────────────────────────────────────────────────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Multi-perspective AI personas** — each historical figure is a distinct agent with their own memory, worldview, and emotional state.
+- **Live voice + live interruption** — listen like a podcast, or hit the mic and talk back. They hear you, and the conversation bends around you.
+- **Sourced, not hallucinated** — every claim links to a real citation you can tap.
+- **Ambient-scored** — per-scenario background music and per-persona environmental sound effects pull you inside the moment.
+- **Ships with dozens of scenarios** and a generator for any new one you want to step into.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How we used ElevenLabs
 
-## Learn More
+ElevenLabs isn't an accent on this project — it's the entire sensory layer. Every sound you hear in a session is ElevenLabs.
 
-To learn more about Next.js, take a look at the following resources:
+```
+  ┌─────────────────────────────────────────────────────────┐
+  │                   ElevenLabs stack                      │
+  ├─────────────────────────────────────────────────────────┤
+  │                                                         │
+  │   🗣️  TTS (streaming)   ──▶  per-persona voices         │
+  │       convex/synthesiseSpeech.ts                        │
+  │       convex/voiceMatching.ts                           │
+  │                                                         │
+  │   🎙️  STT                ──▶  user interruptions        │
+  │       convex/transcribeSpeech.ts                        │
+  │                                                         │
+  │   🎼  Music API          ──▶  scenario background score │
+  │       convex/generateBackgroundMusic.ts                 │
+  │                                                         │
+  │   🔊  Sound Effects API  ──▶  persona environments      │
+  │       convex/generateCharacterSoundEffect.ts            │
+  │                                                         │
+  └─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+                  ┌────────────────┐
+                  │  AmbientEngine │  on-device mixer
+                  │  (Web Audio)   │  with auto-ducking
+                  └────────────────┘
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Layer | Where it lives | What it does |
+|---|---|---|
+| **Streaming TTS** | `convex/synthesiseSpeech.ts` · `convex/voiceMatching.ts` · `src/lib/voiceEngine.ts` | Each persona gets a matched ElevenLabs voice. Turns stream into a Web Audio engine for gapless playback. |
+| **STT** | `convex/transcribeSpeech.ts` | Captures user interruptions via the mic, routes them into the persona orchestrator as a real turn — not a text reply. |
+| **Music API** | `convex/generateBackgroundMusic.ts` | Generates a scenario-specific ambient score from the era + emotional tone profile. Cached per scenario. |
+| **Sound Effects API** | `convex/generateCharacterSoundEffect.ts` | Generates a short environmental loop per persona (artillery behind a soldier, mission-control chatter behind a flight director). |
+| **Client mixer** | `src/lib/ambientEngine.ts` · `src/components/session/AmbientAudioControls.tsx` | Three layers (speech / music / SFX) mix on-device with automatic ducking, independent gain, and fades so atmosphere never fights the voice. |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+    Speech    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓    ◀── full volume
+    Music     ░░▒▒░░░░░░░▒▒▒▒░░░░░░▒▒▒░     ◀── auto-ducked
+    SFX       ▒░░▒░░▒░░░▒▒░░▒░░░▒░░░▒░      ◀── persona-specific
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## How Kiro powered this
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+We ran Kiro in **spec-driven mode** end-to-end. The result: a week's hackathon shipping the kind of multi-agent system that usually takes a month.
+
+```
+   .kiro/specs/
+   ├── pov-podcast/                   ◀── the core platform
+   │   ├── requirements.md   (545 lines)
+   │   ├── design.md         (911 lines)
+   │   ├── tasks.md          (395 lines)
+   │   ├── convex-patterns.md
+   │   ├── openrouter-api.md
+   │   └── runpod-api.md
+   │
+   └── elevenlabs-ambient-audio/      ◀── the music + SFX system
+       ├── requirements.md
+       ├── design.md
+       └── tasks.md
+```
+
+**Spec-driven (the biggest multiplier).** Every major subsystem — persona orchestration, the interruption pipeline, voice matching, ambient audio — was specced first and handed to Kiro task-by-task. The spec became the contract; Kiro kept the codebase internally consistent across 30+ Convex functions and a multi-layer audio engine. The turn orchestrator (`orchestrateTurn`, `generatePersonaTurn`, `compactPersonaContext`) came out in one coherent pass — streaming, context compaction, and moderation gating all aligned to the design doc.
+
+**Steering docs** that actually moved the needle:
+
+1. *"This is NOT the Next.js you know — read the bundled docs before writing code."* — killed an entire class of outdated-API hallucinations on Next.js 16.
+2. *"Always read `convex/_generated/ai/guidelines.md` first — it overrides training data."* — killed Convex anti-patterns around actions vs. mutations and the `"use node"` directive.
+3. The spec folders themselves acted as project-scoped steering — Kiro treated `design.md` as ground truth for architectural decisions.
+
+**Kiro powers & MCP.** The bundled Convex powers (`convex-setup-auth`, `convex-create-component`, `convex-performance-audit`) caught a read-amplification pattern on our ambient-audio subscription queries before it hit production. The Convex MCP server let Kiro introspect our live deployment — schema, functions, queries — compressing a 45-minute debug on stale subscription caches into 90 seconds.
+
+**Vibe coding where it was right.** For UI polish, loading skeletons, mobile responsiveness, and one-shot mutations, we went full vibe mode — short back-and-forth, small diffs. Spec-first for architecture, vibe for polish. That division of labor is the whole trick.
+
+---
+
+## Tech stack
+
+- **Frontend** — Next.js 16, React, Tailwind, Web Audio API
+- **Backend** — Convex (real-time DB + auth + serverless actions)
+- **Voice & audio** — ElevenLabs (TTS · STT · Music · Sound Effects)
+- **LLM** — OpenRouter (multi-model routing)
+- **Images** — Flux 2 Pro via OpenRouter (avatars + banners + cover art)
+- **Developed with** — Kiro (spec-driven mode)
+
+---
+
+## Running it locally
+
+```bash
+npm install
+npx convex dev   # in one terminal — starts the backend
+npm run dev      # in another — starts Next.js at localhost:3000
+```
+
+Set the following Convex env vars (`npx convex env set KEY value`):
+
+- `ELEVENLABS_API_KEY`
+- `OPENROUTER_API_KEY`
+
+---
+
+## Links
+
+- **Live demo** — [pov-podcast.vercel.app](https://pov-podcast-ibcpvgrix-jashwanth0712s-projects.vercel.app)
+- **Repo** — [github.com/jashwanth0712/pov_podcast](https://github.com/jashwanth0712/pov_podcast)
+- **#ElevenHacks** · **#CodeWithKiro**
+
+> History wasn't written by one voice. It shouldn't be heard in one either.
